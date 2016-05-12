@@ -1,10 +1,9 @@
 <?php
-error_reporting(E_ALL);
 define('MAX_LINESIZE',1000);
 define('DEFAULT_TFPATH',dirname(__FILE__));
 define('DEFAULT_TFNAME','data.txt');
 define('CSV_WITH_HEADER',1);
-define('CSV_NO_HEADER',0);
+define('CSV_WITHOUT_HEADER',0);
 class FileText {
 	protected $_pfname;
 	protected $content;
@@ -81,9 +80,9 @@ class FileText {
 			fclose($pfile);
 			$result['cols'] = $count;
 			$result['rows'] = $index-$start;
-			$result['error'] = false;
+			$result['stat'] = false;
 		} else {
-			$result['error'] = true;
+			$result['stat'] = true;
 		}
 		if ($do_ext==false) {
 			$this->content = $result;

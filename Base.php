@@ -1,20 +1,26 @@
 <?php
-error_reporting(E_ALL);
-define('DEFAULT_DBPATH',dirname(__FILE__).'/');
+define('DEFAULT_DBPATH',dirname(__FILE__));
 class Base {
 	protected $_dbmain;
 	protected $_dbfile;
 	function __construct($dbfile,$dbpath=DEFAULT_DBPATH) {
 		try {
-			$dbfull = $dbpath.$dbfile;
-			$this->_dbmain = new PDO("sqlite:".$dbfull);
+			$this->_dbfile = $dbpath.'/'.$dbfile;
+			if (dirname($this->_dbfile)!=dirname(__FILE__)) {
+				if (!file_exists(dirname($this->_dbfile))) {
+					mkdir(dirname($this->_dbfile));
+				}
+				chmod(dirname($this->_dbfile),0777);
+			}
+			touch($this->_dbfile);
+			chmod($this->_dbfile,0666);
+			$this->_dbmain = new PDO("sqlite:".$this->_dbfile);
 			$this->_dbmain->setAttribute(PDO::ATTR_PERSISTENT,true);
 			$this->_dbmain->setAttribute(PDO::ATTR_ERRMODE,
 				PDO::ERRMODE_EXCEPTION);
 		} catch ( Exception $error ) {
 			$this->throw_debug($error->getMessage());
 		}
-		$this->_dbfile = $dbfull;
 	}
 	protected function throw_debug($error) {
 		throw new Exception('['.get_class($this).'] => {'.$error.'}');
@@ -23,7 +29,7 @@ class Base {
 		try { // returns PDOStatement or FALSE
 			$result = $this->_dbmain->prepare($query);
 		} catch ( PDOException $error ) {
-			$this->throw_debug('Cannot prepare query! ('.
+			$this->throw_debug('Cannot prepare query! {'.$query.'} ('.
 				$error->getMessage().')');
 		}
 		return $result;
@@ -32,7 +38,7 @@ class Base {
 		try { // returns PDOStatement or FALSE
 			$result = $this->_dbmain->query($query);
 		} catch ( PDOException $error ) {
-			$this->throw_debug('Cannot execute query! ('.
+			$this->throw_debug('Cannot execute query! {'.$query.'} ('.
 				$error->getMessage().')');
 		}
 		return $result;

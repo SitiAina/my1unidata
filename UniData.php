@@ -2,34 +2,44 @@
 require_once dirname(__FILE__).'/Base.php';
 define('UNIDATA_FILE','unidata.sqlite');
 class UniData extends Base {
+	protected $_userid;
+	protected $_dounid;
+	protected $_doname;
 	protected $_sessem; // session semester YYYYNNNNS format
 	protected $_doskip; // skip column with these names
-	protected $_userid;
-	protected $_doname;
-	function __construct($sessem,$dbfile=UNIDATA_FILE) {
+	function __construct($dbfile=UNIDATA_FILE) {
 		parent::__construct($dbfile);
-		$this->_sessem = intval($sessem); // should i check for format?
+		$this->_userid = null;
+		$this->_dounid = null;
+		$this->_doname = null;
+		$this->_sessem = null;
 		$this->_doskip = [ 'stid','matrik','nama','name','id','prog',
 			'lgrp','flag','grp','lab' ];
-		$this->_userid = null;
-		$this->_doname = null;
 	}
-	function validate($username, $userpass) {
+	function validateUser($username, $userpass) {
 		// hashing done by clients
-		$prep = "SELECT id FROM students WHERE unid=? AND pass=?";
+		$prep = "SELECT id,unid,name FROM students WHERE unid=? AND pass=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
 				!$stmt->bindValue(2,$userpass,PDO::PARAM_STR)) {
-			$this->throw_debug('Validate bind error!');
+			$this->throw_debug('validateUser bind error!');
 		}
 		if (!$stmt->execute()) {
-			$this->throw_debug('Validate execute error!');
+			$this->throw_debug('validateUser execute error!');
 		}
 		$item = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($item==false) return false;
-		$this->_userid = intval($item['id']);
-		$this->_doname = $username;
+		$this->_userid = intval($item['id']); // make sure an integer?
+		$this->_dounid = $item['unid'];
+		$this->_doname = $item['name'];
 		return true;
+	}
+	function getProfile() {
+		return [ "unid" => $this->_dounid, "name" => $this->_doname,
+			"staf" => false ];
+	}
+	function selectSession($sessem) {
+		$this->_sessem = intval($sessem); // should i check for format?
 	}
 	function checkStudents() {
 		$table = "students";
@@ -41,6 +51,7 @@ class UniData extends Base {
 				array("name"=>"pass","type"=>"TEXT NOT NULL"),
 				array("name"=>"name","type"=>"TEXT NOT NULL"),
 				array("name"=>"nrid","type"=>"TEXT NOT NULL"),
+				array("name"=>"prog","type"=>"TEXT NOT NULL"),
 				array("name"=>"flag","type"=>"INTEGER"));
 			$this->table_create($table,$tdata);
 		}
@@ -58,11 +69,11 @@ class UniData extends Base {
 		$item = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($item!=false) {
 			$result = $item;
-			$result['ok'] = true;
+			$result['stat'] = true;
 			$result['id'] = intval($item['id']); // make sure an integer?
 			$result['flag'] = intval($item['flag']);
 		} else {
-			$result['ok'] = false;
+			$result['stat'] = false;
 		}
 		return $result;
 	}
@@ -110,12 +121,12 @@ class UniData extends Base {
 		$item = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($item!=false) {
 			$result = $item;
-			$result['ok'] = true;
+			$result['stat'] = true;
 			$result['id'] = intval($item['id']); // make sure an integer?
 			$result['unit'] = intval($item['unit']);
 			$result['flag'] = intval($item['flag']);
 		} else {
-			$result['ok'] = false;
+			$result['stat'] = false;
 		}
 		return $result;
 	}
@@ -168,11 +179,11 @@ class UniData extends Base {
 		$item = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($item!=false) {
 			$result = $item;
-			$result['ok'] = true;
+			$result['stat'] = true;
 			$result['id'] = intval($item['id']); // make sure an integer?
 			$result['flag'] = intval($item['flag']);
 		} else {
-			$result['ok'] = false;
+			$result['stat'] = false;
 		}
 		return $result;
 	}
@@ -245,9 +256,9 @@ class UniData extends Base {
 			}
 			$result['data'] = $items;
 			$result['count'] = $count;
-			$result['ok'] = true;
+			$result['stat'] = true;
 		} else {
-			$result['ok'] = false;
+			$result['stat'] = false;
 		}
 		return $result;
 	}
@@ -275,7 +286,7 @@ class UniData extends Base {
 	}
 	function checkCourseMarkTable($table,$coid) {
 		$check = $this->findCourseComponents($coid);
-		if ($check['ok']==false) {
+		if ($check['stat']==false) {
 			$this->throw_debug('checkCourseMarkTable find error!');
 		}
 		if (!$this->table_exists($table)) {
@@ -332,10 +343,10 @@ class UniData extends Base {
 		}
 		$item = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($item!=false) {
-			$result['ok'] = true;
+			$result['stat'] = true;
 			$result['id'] = intval($item['id']);
 		} else {
-			$result['ok'] = false;
+			$result['stat'] = false;
 		}
 		return $result;
 	}
@@ -371,7 +382,7 @@ class UniData extends Base {
 		}
 		$name = $test['val'];
 		$test = $this->findCourseMarkStudent($table,$stid);
-		if ($test['ok'] == false) {
+		if ($test['stat'] == false) {
 			// create new
 			$prep = "INSERT INTO ".$table;
 			$prep = $prep." (stid,name,flag) ";
@@ -402,7 +413,7 @@ class UniData extends Base {
 		require_once dirname(__FILE__).'/FileText.php';
 		$file = new FileText();
 		$data = $file->loadCSV($fname);
-		if ($data['error']===true) {
+		if ($data['stat']===true) {
 			$this->throw_debug('Cannot load course info list!');
 		} else if ($data['rows']==0) {
 			$this->throw_debug('No course info in list!');
@@ -438,10 +449,10 @@ class UniData extends Base {
 			$name = trim($line[$iname]);
 			$unit = intval($line[$iunit]);
 			$info = $this->findCourse($code);
-			if ($info['ok']==false) {
+			if ($info['stat']==false) {
 				$this->createCourse($code,$name,$unit);
 				$info = $this->findCourse($code);
-				if ($info['ok']==false) {
+				if ($info['stat']==false) {
 					$this->throw_debug('Something is WRONG!');
 				}
 			}
@@ -478,11 +489,11 @@ class UniData extends Base {
 		// find course in database
 		$this->checkCourses();
 		$info = $this->findCourse($code);
-		if ($info['ok']==false) {
+		if ($info['stat']==false) {
 			// create course with zero unit - modify later!
 			$this->createCourse($code,$name,0);
 			$info = $this->findCourse($code);
-			if ($info['ok']==false) {
+			if ($info['stat']==false) {
 				$this->throw_debug('Something is WRONG!');
 			}
 		}
@@ -514,22 +525,22 @@ class UniData extends Base {
 			$line[$iunid] = trim($line[$iunid]);
 			$line[$iname] = trim($line[$iname]);
 			$stud = $this->findStudent($line[$iunid]);
-			if ($stud['ok']==false) {
+			if ($stud['stat']==false) {
 				if ($inrid<0) {
 					$this->throw_debug('Not enough info to create student!');
 				}
 				$line[$inrid] = trim($line[$inrid]);
 				$this->createStudent($line[$iunid],$line[$iname],$line[$inrid]);
 				$stud = $this->findStudent($line[$iunid]);
-				if ($stud['ok']==false) {
+				if ($stud['stat']==false) {
 					$this->throw_debug('Something is WRONG!');
 				}
 			}
 			$cost = $this->findCourseStudent($info['id'],$stud['id']);
-			if ($cost['ok']==false) {
+			if ($cost['stat']==false) {
 				$this->createCourseStudent($info['id'],$stud['id']);
 				$cost = $this->findCourseStudent($info['id'],$stud['id']);
-				if ($cost['ok']==false) {
+				if ($cost['stat']==false) {
 					$this->throw_debug('Something is WRONG!');
 				}
 			}
@@ -545,10 +556,10 @@ class UniData extends Base {
 					$iunid!=$count&&$inrid!=$count&&$iname!=$count&&
 					array_search($head,$this->_doskip)==false) {
 				$comp = $this->findCourseComponents($info['id'],$head);
-				if ($comp['ok']==false) {
+				if ($comp['stat']==false) {
 					$this->createCourseComponent($info['id'],$head,0.0,0.0,0);
 					$comp = $this->findCourseComponents($info['id'],$head);
-					if ($comp['ok']==false) {
+					if ($comp['stat']==false) {
 						$this->throw_debug('Something is WRONG!');
 					}
 				}
