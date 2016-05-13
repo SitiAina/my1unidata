@@ -49,11 +49,14 @@ try {
 	echo "\t<input type=\"text\" name=\"staffId\" id=\"staffid\"";
 	echo "placeholder=\"".$user['unid']."\" disabled><br><br>\n";
 ?>
-	<label>Select List File</label><br>
+	<label>Select Data File (CSV)</label><br>
 	<input type="file" name="dataFile" id="datafile"><br><br>
 	<label>Select Command</label><br>
-	<select id="aCommand" name="acommand">
-	<option value=1>Create Staff</option>
+	<select id="aCommand" name="aCommand">
+<?php
+	echo "\t<option value=".TASK_STAFF_CREATE_STAFF.">Create Staff</option>\n";
+	echo "\t<option value=".TASK_STAFF__STAFF.">View Staffs</option>\n";
+?>
 	</select><br><br>
 	<input type="submit" value="Process Command" name="submit"><br><br>
 </form>

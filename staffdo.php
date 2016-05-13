@@ -52,12 +52,45 @@ try {
 	$file = new FileText();
 	$csvd = $file->loadCSV($filename);
 	if ($csvd['error']===true) {
-		$this->throw_debug('Cannot load data!');
-	} else if ($data['rows']==0) {
-		$this->throw_debug('No data found!');
+		throw new RuntimeException('Cannot load data!');
+	} else if ($csvd['rows']==0) {
+		throw new RuntimeException('No data found!');
 	}
 	// what's the command?
-
+	switch ($_POST["aCommand"])
+	{
+		case TASK_STAFF_CREATE_STAFF:
+			if ($csvd['cols']!=3||$csvd['headline'][0]!=HEADER_STAFF_UNID||
+					$csvd['headline'][1]!=HEADER_STAFF_NRIC||
+					$csvd['headline'][2]!=HEADER_STAFF_NAME)
+			{
+				throw new RuntimeException('Invalid format?!');
+			}
+			$data->checkStaff();
+			foreach ($csvd['dataline'] as $line) {
+				// fixed index
+				$unid = strtoupper(trim($line[0]));
+				$nric = strtoupper(trim($line[1]));
+				$name = strtoupper(trim($line[2]));
+				$staf = $data->findStaff($unid);
+				if ($staf['stat']==false) {
+					$data->createStaff($unid,$name,$nrid);
+					$staf = $data->findStaff($unid);
+					if ($staf['stat']==false) {
+						throw new RuntimeException('Something is WRONG!');
+					}
+				}
+			}
+			break;
+		case TASK_STAFF_VIEW_STAFF:
+			$staf = $data->listStaff();
+			if ($staf['stat']==false) {
+				throw new RuntimeException('Something is WRONG!');
+			}
+			break;
+		default:
+			throw new RuntimeException('Unknown error?!');
+	}
 } catch (RuntimeException $error) {
 	session_destroy();
 	if (DEBUG_MODE) {
@@ -69,5 +102,4 @@ try {
 	echo "<h1>Error</h1>".PHP_EOL.$message;
 	exit();
 }
-
 ?>

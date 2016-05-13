@@ -61,6 +61,26 @@ class UniDataStaff extends UniData {
 		}
 		return $result;
 	}
+	function listStaff() {
+		$result = [];
+		$prep = "SELECT unid, name, nrid, flag FROM staffs";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$unid,PDO::PARAM_STR)) {
+			$this->throw_debug('listStaff bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('listStaff execute error!');
+		}
+		$item = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($item!=false) {
+			$result = $item;
+			$result['stat'] = true;
+			$result['flag'] = intval($item['flag']);
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
+	}
 	function createStaff($unid,$name,$nrid) {
 		$unid = strtoupper($unid);
 		$name = strtoupper($name);
