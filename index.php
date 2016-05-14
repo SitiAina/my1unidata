@@ -4,7 +4,22 @@ try {
 	session_start();
 	if (!isset($_SESSION['username'])||!isset($_SESSION['userpass'])||
 			!isset($_SESSION['usertype'])) {
-		header('Location: login.php');
+		// create HTML
+		require_once dirname(__FILE__).'/HTMLDocument.php';
+		// create doc generator
+		$dohtml = new HTMLDocument(MY1APP_TITLE);
+		// create page title
+		$dotemp = new HTMLObject('h1');
+		$dotemp->insert_inner(MY1APP_TITLE);
+		$dotemp->do_1skipline();
+		$dohtml->append_2body($dotemp);
+		// create command links
+		$dotemp = new HTMLObject('p');
+		$dotemp->insert_inner('<a href="login.php">Login</a>');
+		$dotemp->do_1skipline();
+		$dohtml->append_2body($dotemp);
+		// generate HTML
+		echo $dohtml->write_html();
 		exit();
 	}
 	$type = "UniData";
@@ -22,13 +37,13 @@ try {
 	// create doc generator
 	$dohtml = new HTMLDocument(MY1APP_TITLE);
 	// assign local styles
-	//$dohtml->append_2head(get_style_local());
+	//$dohtml->append_2head();
 	// assign local scripts
-	//$dohtml->append_2head(get_script_local());
+	//$dohtml->append_2head();
 	// assign external library scripts
-	//$dohtml->append_2head(get_script_exlib());
+	//$dohtml->append_2head();
 	// assign main script
-	//$dohtml->append_2body(get_script_main($server));
+	//$dohtml->append_2body();
 	// assign onload
 	//$dohtml->insert_onload('main()');
 	// create page title
@@ -168,6 +183,11 @@ try {
 		$doopts->do_1skipline();
 		$dotemp->append_object($doopts);
 	}
+	// create command links
+	$dotemp = new HTMLObject('p');
+	$dotemp->insert_inner('<a href="stafflist.php">View Staff List</a>');
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
 	// generate HTML
 	echo $dohtml->write_html();
 } catch (Exception $error) {

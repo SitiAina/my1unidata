@@ -20,31 +20,31 @@ try {
 	// check upload error... from php.net
 	if (!isset($_FILES['dataFile']['error']) ||
 			is_array($_FILES['dataFile']['error'])) {
-		throw new RuntimeException('Invalid parameters!');
+		throw new Exception('Invalid parameters!');
 	}
 	switch ($_FILES['dataFile']['error']) {
 		case UPLOAD_ERR_OK:
 			break;
 		case UPLOAD_ERR_NO_FILE:
-			throw new RuntimeException('No file sent.');
+			throw new Exception('No file sent.');
 		case UPLOAD_ERR_INI_SIZE:
 		case UPLOAD_ERR_FORM_SIZE:
-			throw new RuntimeException('Exceeded filesize limit.');
+			throw new Exception('Exceeded filesize limit.');
 		default:
-			throw new RuntimeException('Unknown errors.');
+			throw new Exception('Unknown errors.');
 	}
 	// enforce these!
 	if ($_FILES["dataFile"]["size"] == 0) {
-		throw new RuntimeException('Empty file?!');
+		throw new Exception('Empty file?!');
 	}
 	if (empty($_POST["staffId"])) {
-		throw new RuntimeException('No Staff ID!');
+		throw new Exception('No Staff ID!');
 	}
 	if ($_POST["staffId"]!=$user['unid']) {
-		throw new RuntimeException('Invalid ID!');
+		throw new Exception('Invalid ID!');
 	}
 	if ($_FILES["dataFile"]["size"] > 500000) {
-		throw new RuntimeException('File too large!');
+		throw new Exception('File too large!');
 	}
 	// simply load temporary file
 	$filename = $_FILES["dataFile"]["tmp_name"];
@@ -52,9 +52,9 @@ try {
 	$file = new FileText();
 	$csvd = $file->loadCSV($filename);
 	if ($csvd['error']===true) {
-		throw new RuntimeException('Cannot load data!');
+		throw new Exception('Cannot load data!');
 	} else if ($csvd['rows']==0) {
-		throw new RuntimeException('No data found!');
+		throw new Exception('No data found!');
 	}
 	// what's the command?
 	switch ($_POST["aCommand"])
@@ -64,7 +64,7 @@ try {
 					$csvd['headline'][1]!=HEADER_STAFF_NRIC||
 					$csvd['headline'][2]!=HEADER_STAFF_NAME)
 			{
-				throw new RuntimeException('Invalid format?!');
+				throw new Exception('Invalid format?!');
 			}
 			$data->checkStaff();
 			foreach ($csvd['dataline'] as $line) {
@@ -77,7 +77,7 @@ try {
 					$data->createStaff($unid,$name,$nrid);
 					$staf = $data->findStaff($unid);
 					if ($staf['stat']==false) {
-						throw new RuntimeException('Something is WRONG!');
+						throw new Exception('Something is WRONG!');
 					}
 				}
 			}
@@ -85,13 +85,13 @@ try {
 		case TASK_STAFF_VIEW_STAFF:
 			$staf = $data->listStaff();
 			if ($staf['stat']==false) {
-				throw new RuntimeException('Something is WRONG!');
+				throw new Exception('Something is WRONG!');
 			}
 			break;
 		default:
-			throw new RuntimeException('Unknown error?!');
+			throw new Exception('Unknown error?!');
 	}
-} catch (RuntimeException $error) {
+} catch (Exception $error) {
 	session_destroy();
 	if (DEBUG_MODE) {
 		$message = $error->getMessage();
