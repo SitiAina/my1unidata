@@ -130,21 +130,6 @@ class UniData extends Base {
 		}
 		return $result;
 	}
-	function createCourse($code,$name,$unit) {
-		$code = strtoupper($code);
-		$name = strtoupper($name);
-		$prep = "INSERT INTO courses (code,name,unit,flag) ".
-			"VALUES (:code,:name,:unit,1)";
-		$stmt = $this->prepare($prep);
-		$stmt->bindValue(':code',$code,PDO::PARAM_STR);
-		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
-		$stmt->bindValue(':unit',$unit,PDO::PARAM_INT);
-		$temp = $stmt->execute();
-		$stmt->closeCursor();
-		if ($temp==false) {
-			$this->throw_debug('createCourse Failed');
-		}
-	}
 	function checkCoursesStudents() {
 		$table = "courses_students";
 		if (!$this->table_exists($table)) {

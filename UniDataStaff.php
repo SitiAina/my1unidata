@@ -95,22 +95,6 @@ class UniDataStaff extends UniData {
 		}
 		return $result;
 	}
-	function listStaff() {
-		$result = [];
-		$prep = "SELECT unid, nrid, name, flag FROM staffs";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->execute()) {
-			$this->throw_debug('listStaff execute error!');
-		}
-		$item = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		if ($item!=false) {
-			$result['list'] = $item;
-			$result['stat'] = true;
-		} else {
-			$result['stat'] = false;
-		}
-		return $result;
-	}
 	function createStaff($unid,$name,$nrid,$alvl=0) {
 		$unid = strtoupper($unid);
 		$name = strtoupper($name);
@@ -130,6 +114,54 @@ class UniDataStaff extends UniData {
 		if ($temp==false) {
 			$this->throw_debug('createStaff Failed');
 		}
+	}
+	function listStaff() {
+		$result = [];
+		$prep = "SELECT unid, nrid, name, flag FROM staffs";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->execute()) {
+			$this->throw_debug('listStaff execute error!');
+		}
+		$item = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($item!=false) {
+			$result['list'] = $item;
+			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
+	}
+	function createCourse($code,$name,$unit) {
+		$code = strtoupper($code);
+		$name = strtoupper($name);
+		$unit = intval($unit);
+		$prep = "INSERT INTO courses (code,name,unit,flag) ".
+			"VALUES (:code,:name,:unit,1)";
+		$stmt = $this->prepare($prep);
+		$stmt->bindValue(':code',$code,PDO::PARAM_STR);
+		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
+		$stmt->bindValue(':unit',$unit,PDO::PARAM_INT);
+		$temp = $stmt->execute();
+		$stmt->closeCursor();
+		if ($temp==false) {
+			$this->throw_debug('createCourse Failed');
+		}
+	}
+	function listCourse() {
+		$result = [];
+		$prep = "SELECT code, name, unit FROM courses";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->execute()) {
+			$this->throw_debug('listCourse execute error!');
+		}
+		$item = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($item!=false) {
+			$result['list'] = $item;
+			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
 	}
 }
 ?>

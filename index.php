@@ -203,6 +203,11 @@ JSMAIN;
 		$dotemp->do_1skipline();
 		$dohtml->append_2body($dotemp);
 	}
+	// create command links
+	$dotemp = new HTMLObject('p');
+	$dotemp->insert_inner('<a href="courselist.php">View Course List</a>');
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
 	// generate HTML
 	echo $dohtml->write_html();
 } catch (Exception $error) {

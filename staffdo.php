@@ -88,6 +88,35 @@ try {
 				}
 			}
 			break;
+		case TASK_STAFF_CREATE_COURSE:
+			if ($csvd['cols']!=3||
+					strtoupper($csvd['headline'][0])!=HEADER_COURSE_CODE||
+					strtoupper($csvd['headline'][1])!=HEADER_COURSE_NAME||
+					strtoupper($csvd['headline'][2])!=HEADER_COURSE_UNIT)
+			{
+				throw new Exception('Invalid format?!');
+			}
+			$data->checkCourses();
+			foreach ($csvd['dataline'] as $line) {
+				// fixed index
+				$code = strtoupper(trim($line[0]));
+				$name = strtoupper(trim($line[1]));
+				$unit = strtoupper(trim($line[2]));
+				if (empty($code)||empty($name)||empty($unit)) {
+					throw new Exception('Empty fields!');
+				}
+				$cors = $data->findCourse($code);
+				if ($cors['stat']==false) {
+					$data->createCourse($code,$name,$unit);
+					$cors = $data->findCourse($code);
+					if ($cors['stat']==false) {
+						throw new Exception('Something is WRONG!');
+					}
+				} else {
+					throw new Exception('Course already in list!');
+				}
+			}
+			break;
 		default:
 			throw new Exception('Unknown error?!');
 	}
