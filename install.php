@@ -7,19 +7,24 @@ try {
 	$unid = "0100000"; /* ultimate user */
 	$name = "root"; /* ultimate name :p */
 	$nrid = "010101000101"; /* ultimate nrid? */
-	header('Content-Type: text/html; charset=utf-8');
 	require_once dirname(__FILE__).'/UniDataStaff.php';
-	$test = new UniDataStaff(0);
+	$test = new UniDataStaff();
 	$test->checkStaff();
 	$init = $test->findStaff($unid);
 	if ($init['stat']===false) {
 		$test->createStaff($unid,$name,$nrid);
 	}
+	header('Content-Type: text/html; charset=utf-8');
 	echo "<h1>YAY!</h1>".PHP_EOL;
 } catch( Exception $error ) {
-	echo "<h1>NAY!</h1>".PHP_EOL;
-/**
-	echo "<h1>NAY!</h1> (".$error->getMessage().")".PHP_EOL;
-**/
+	require_once dirname(__FILE__).'/config.php';
+	if (DEBUG_MODE) {
+		$message = $error->getMessage();
+	} else {
+		$message = "General Error!";
+	}
+	header('Content-Type: text/html; charset=utf-8');
+	echo "<h1>NAY!</h1>".PHP_EOL.$message;
 }
+exit();
 ?>

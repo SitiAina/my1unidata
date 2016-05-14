@@ -1,11 +1,12 @@
 <?php
 require_once dirname(__FILE__).'/UniData.php';
 class UniDataStaff extends UniData {
+	protected $_alevel;
 	function __construct($dbfile=UNIDATA_FILE) {
 		parent::__construct($dbfile);
 	}
 	function validateUser($username, $userpass) {
-		$prep = "SELECT id,unid,name FROM staffs WHERE unid=? AND pass=?";
+		$prep = "SELECT id,unid,name,alvl FROM staffs WHERE unid=? AND pass=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
 				!$stmt->bindValue(2,$userpass,PDO::PARAM_STR)) {
@@ -19,6 +20,7 @@ class UniDataStaff extends UniData {
 		$this->_userid = intval($item['id']); // make sure an integer?
 		$this->_dounid = $item['unid'];
 		$this->_doname = $item['name'];
+		$this->_alevel = intval($item['alvl']);
 		return true;
 	}
 	function getProfile() {
@@ -36,6 +38,7 @@ class UniDataStaff extends UniData {
 				array("name"=>"pass","type"=>"TEXT NOT NULL"),
 				array("name"=>"name","type"=>"TEXT NOT NULL"),
 				array("name"=>"nrid","type"=>"TEXT NOT NULL"),
+				array("name"=>"alvl","type"=>"INTEGER"),
 				array("name"=>"flag","type"=>"INTEGER"));
 			$this->table_create($table,$tdata);
 		}
@@ -81,18 +84,20 @@ class UniDataStaff extends UniData {
 		}
 		return $result;
 	}
-	function createStaff($unid,$name,$nrid) {
+	function createStaff($unid,$name,$nrid,$alvl=0) {
 		$unid = strtoupper($unid);
 		$name = strtoupper($name);
 		$nrid = strtoupper($nrid);
+		$alvl = intval($alvl);
 		$hash = hash('sha512',$nrid,false);
-		$prep = "INSERT INTO staffs (unid,pass,name,nrid,flag) ".
-			"VALUES (:unid,:pass,:name,:nrid,1)";
+		$prep = "INSERT INTO staffs (unid,pass,name,nrid,alvl,flag) ".
+			"VALUES (:unid,:pass,:name,:nrid,:alvl,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':unid',$unid,PDO::PARAM_STR);
 		$stmt->bindValue(':pass',$hash,PDO::PARAM_STR);
 		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
 		$stmt->bindValue(':nrid',$nrid,PDO::PARAM_STR);
+		$stmt->bindValue(':alvl',$alvl,PDO::PARAM_INT);
 		$temp = $stmt->execute();
 		$stmt->closeCursor();
 		if ($temp==false) {

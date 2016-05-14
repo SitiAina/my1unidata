@@ -13,18 +13,14 @@ if ($_SERVER['REQUEST_METHOD']=='POST') {
 		$_SESSION['userpass'] = $userpass;
 		$_SESSION['usertype'] = $usertype;
 		header('Location: index.php');
+		exit();
 	}
 } else {
 	/* must be GET? */
 	session_destroy();
 }
-?>
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<?php echo "<title>".MY1APP_TITLE."</title>\n"; ?>
-<script id="js_extlib" type="text/javascript">
+try {
+	$js_extlib = <<< JSEXTLIB
 /*
  * js-sha512 v0.1.1
  * https://github.com/emn178/js-sha512
@@ -305,29 +301,113 @@ if ($_SERVER['REQUEST_METHOD']=='POST') {
 		root.sha512_256 = sha512_256;
 	}
 }(this));
-</script>
-</head>
-<body>
-<script id="js_main" type="text/javascript">
+JSEXTLIB;
+	$js_main = <<< JSMAIN
 function login_check() {
 	var chk_form = document.getElementById('form_login');
 	chk_form.password.value = sha512(chk_form.password.value);
 	return true;
 }
-</script>
-<?php echo "<h1>".MY1APP_TITLE." - Login</h1>\n"; ?>
-<form id="form_login" method="POST" action="login.php"
-	onsubmit="javascript:return login_check();">
-<label>Username</label><br>
-<input type="text" name="username" placeholder="Username"><br><br>
-<label>Password</label><br>
-<input type="password" name="password" placeholder="Password"><br><br>
-<label>Login Type</label><br>
-<select id="typepick" name="usertype">
-<option value=1>Student</option>
-<option value=4>Staff</option>
-</select>
-<input type="submit" name="login" value="Login">
-</form>
-</body>
-</html>
+JSMAIN;
+	// create HTML
+	require_once dirname(__FILE__).'/HTMLDocument.php';
+	// create doc generator
+	$dohtml = new HTMLDocument(MY1APP_TITLE);
+	// create external library scripts
+	$dotemp = new JSObject('js_extlib');
+	$dotemp->insert_inner($js_extlib);
+	$dohtml->append_2head($dotemp);
+	// create main script
+	$dotemp = new JSObject('js_main');
+	$dotemp->insert_inner($js_main);
+	// create page title
+	$dohtml->append_2body($dotemp);
+	$dotemp = new HTMLObject('h1');
+	$dotemp->insert_inner(MY1APP_TITLE." - Login");
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
+	// create form
+	$doform = new HTMLObject('form');
+	$doform->insert_id('form_login');
+	$doform->insert_keyvalue('method','POST');
+	$doform->insert_keyvalue('action','login.php');
+	$doform->insert_keyvalue('onsubmit',
+		'javascript:return login_check();');
+	$doform->do_multiline();
+	$dohtml->append_2body($doform);
+	// create label username
+	$dotemp = new HTMLObject('label');
+	$dotemp->insert_inner('Username');
+	$dotemp->insert_linebr();
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// create input username
+	$dotemp = new HTMLObject('input');
+	$dotemp->insert_keyvalue('type','text');
+	$dotemp->insert_keyvalue('name','username');
+	$dotemp->insert_keyvalue('placeholder','Username');
+	$dotemp->remove_tail();
+	$dotemp->insert_linebr(2);
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// create label username
+	$dotemp = new HTMLObject('label');
+	$dotemp->insert_inner('Password');
+	$dotemp->insert_linebr();
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// create input username
+	$dotemp = new HTMLObject('input');
+	$dotemp->insert_keyvalue('type','password');
+	$dotemp->insert_keyvalue('name','password');
+	$dotemp->insert_keyvalue('placeholder','Password');
+	$dotemp->remove_tail();
+	$dotemp->insert_linebr(2);
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// create label select login type
+	$dotemp = new HTMLObject('label');
+	$dotemp->insert_inner('Login Type');
+	$dotemp->insert_linebr();
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// create select select login type
+	$dotemp = new HTMLObject('select');
+	$dotemp->insert_keyvalue('id','typepick');
+	$dotemp->insert_keyvalue('name','usertype');
+	$dotemp->do_1skipline();
+	$dotemp->do_multiline();
+	$doform->append_object($dotemp);
+	// create options for select
+	$doopts = new HTMLObject('option');
+	$doopts->insert_keyvalue('value',1,true);
+	$doopts->insert_inner('Student');
+	$doopts->do_1skipline();
+	$dotemp->append_object($doopts);
+	$doopts = new HTMLObject('option');
+	$doopts->insert_keyvalue('value',MY1STAFF_LOGIN,true);
+	$doopts->insert_inner('Staff');
+	$doopts->do_1skipline();
+	$dotemp->append_object($doopts);
+	// create submit button
+	$dotemp = new HTMLObject('input');
+	$dotemp->insert_keyvalue('type','submit');
+	$dotemp->insert_keyvalue('value','Login');
+	$dotemp->insert_keyvalue('name','login');
+	$dotemp->remove_tail();
+	$dotemp->do_1skipline();
+	$doform->append_object($dotemp);
+	// generate HTML
+	echo $dohtml->write_html();
+} catch (Exception $error) {
+	session_destroy();
+	if (DEBUG_MODE) {
+		$message = $error->getMessage();
+	} else {
+		$message = "General Error!";
+	}
+	header('Content-Type: text/html; charset=utf-8');
+	echo "<h1>Error</h1>".PHP_EOL.$message;
+}
+exit();
+?>
