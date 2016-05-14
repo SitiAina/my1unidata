@@ -12,7 +12,7 @@ try {
 	$test->checkStaff();
 	$init = $test->findStaff($unid);
 	if ($init['stat']===false) {
-		$test->createStaff($unid,$name,$nrid);
+		$test->createStaff($unid,$name,$nrid,1);
 	}
 	header('Content-Type: text/html; charset=utf-8');
 	echo "<h1>YAY!</h1>".PHP_EOL;

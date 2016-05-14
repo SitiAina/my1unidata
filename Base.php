@@ -1,17 +1,15 @@
 <?php
-define('DEFAULT_DBPATH',dirname(__FILE__));
+define('DEFAULT_DBPATH',dirname(__FILE__).'/data');
 class Base {
 	protected $_dbmain;
 	protected $_dbfile;
 	function __construct($dbfile,$dbpath=DEFAULT_DBPATH) {
 		try {
 			$this->_dbfile = $dbpath.'/'.$dbfile;
-			if (dirname($this->_dbfile)!=dirname(__FILE__)) {
-				if (!file_exists(dirname($this->_dbfile))) {
-					mkdir(dirname($this->_dbfile));
-				}
-				chmod(dirname($this->_dbfile),0777);
+			if (!file_exists(dirname($this->_dbfile))) {
+				mkdir(dirname($this->_dbfile));
 			}
+			chmod(dirname($this->_dbfile),0777);
 			touch($this->_dbfile);
 			chmod($this->_dbfile,0666);
 			$this->_dbmain = new PDO("sqlite:".$this->_dbfile);

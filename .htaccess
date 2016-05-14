@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteRule ^(uploads/|list\.txt|.*\.sqlite) - [F,L,NC]
+RewriteRule ^(data/|.*\.txt|.*\.sqlite) - [F,L,NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ - [F,L,NC]

@@ -23,9 +23,40 @@ class UniDataStaff extends UniData {
 		$this->_alevel = intval($item['alvl']);
 		return true;
 	}
+	function modifyPass($username, $pass_old, $pass_new) {
+		if ($this->_dounid==null) {
+			$this->throw_debug('modifyPass general error!');
+		}
+		$prep = "SELECT id FROM staffs WHERE unid=? AND pass=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$pass_old,PDO::PARAM_STR)) {
+			$this->throw_debug('modifyPass bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyPass execute error!');
+		}
+		$item = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($item==false) {
+			$this->throw_debug('modifyPass validate error!');
+		}
+		$stmt->closeCursor();
+		$prep = "UPDATE staffs SET pass=? WHERE id=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$pass_new,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$item['id'],PDO::PARAM_INT)) {
+			$this->throw_debug('modifyPass bind2 error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyPass execute2 error!');
+		}
+		$stmt->closeCursor();
+		return true;
+	}
 	function getProfile() {
 		$check = parent::getProfile();
 		$check['staf'] = true;
+		$check['alvl'] = $this->_alevel;
 		return $check;
 	}
 	function checkStaff() {

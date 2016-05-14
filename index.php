@@ -32,6 +32,15 @@ try {
 	if ($pass===false)
 		throw new Exception('Invalid login!');
 	$user = $data->getProfile();
+	// js script for page
+	$js_main = <<< JSMAIN
+function mod_check() {
+	var chk_form = document.getElementById('form_staffdo');
+	chk_form.staffId.value = chk_form.staffId.placeholder;
+	chk_form.staffId.disabled = false;
+	return true;
+}
+JSMAIN;
 	// create HTML
 	require_once dirname(__FILE__).'/HTMLDocument.php';
 	// create doc generator
@@ -42,8 +51,10 @@ try {
 	//$dohtml->append_2head();
 	// assign external library scripts
 	//$dohtml->append_2head();
-	// assign main script
-	//$dohtml->append_2body();
+	// create main script
+	$dotemp = new JSObject('js_main');
+	$dotemp->insert_inner($js_main);
+	$dohtml->append_2body($dotemp);
 	// assign onload
 	//$dohtml->insert_onload('main()');
 	// create page title
@@ -54,16 +65,18 @@ try {
 	// create hello message with a link
 	$dotemp = new HTMLObject('p');
 	$dotemp->insert_inner('Hello, '.$user['name'].
-		'&nbsp;&nbsp;(<a href="logout.php">Logout</a>)');
+		'&nbsp;&nbsp;[<a href="staffmod.php">Change Password</a>]'.
+		'&nbsp;&nbsp;[<a href="logout.php">Logout</a>]');
 	$dotemp->do_1skipline();
 	$dohtml->append_2body($dotemp);
 	if ($user['staf']===true) {
 		// create form
 		$doform = new HTMLObject('form');
-		$doform->insert_id('form_login');
+		$doform->insert_id('form_staffdo');
 		$doform->insert_keyvalue('method','POST');
 		$doform->insert_keyvalue('action','staffdo.php');
 		$doform->insert_keyvalue('enctype','multipart/form-data');
+		$doform->insert_keyvalue('onsubmit','javascript:return mod_check();');
 		$doform->do_multiline();
 		$dohtml->append_2body($doform);
 		// create label staff id
@@ -75,7 +88,7 @@ try {
 		// create input staff id
 		$dotemp = new HTMLObject('input');
 		$dotemp->insert_keyvalue('type','text');
-		$dotemp->insert_keyvalue('name','staffID');
+		$dotemp->insert_keyvalue('name','staffId');
 		$dotemp->insert_keyvalue('id','staffid');
 		$dotemp->insert_keyvalue('placeholder',$user['unid']);
 		$dotemp->insert_constant('disabled');
@@ -183,11 +196,13 @@ try {
 		$doopts->do_1skipline();
 		$dotemp->append_object($doopts);
 	}
-	// create command links
-	$dotemp = new HTMLObject('p');
-	$dotemp->insert_inner('<a href="stafflist.php">View Staff List</a>');
-	$dotemp->do_1skipline();
-	$dohtml->append_2body($dotemp);
+	if ($user['alvl']>0) {
+		// create command links
+		$dotemp = new HTMLObject('p');
+		$dotemp->insert_inner('<a href="stafflist.php">View Staff List</a>');
+		$dotemp->do_1skipline();
+		$dohtml->append_2body($dotemp);
+	}
 	// generate HTML
 	echo $dohtml->write_html();
 } catch (Exception $error) {

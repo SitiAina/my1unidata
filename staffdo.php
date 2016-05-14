@@ -60,9 +60,10 @@ try {
 	switch ($_POST["aCommand"])
 	{
 		case TASK_STAFF_CREATE_STAFF:
-			if ($csvd['cols']!=3||$csvd['headline'][0]!=HEADER_STAFF_UNID||
-					$csvd['headline'][1]!=HEADER_STAFF_NRIC||
-					$csvd['headline'][2]!=HEADER_STAFF_NAME)
+			if ($csvd['cols']!=3||
+					strtoupper($csvd['headline'][0])!=HEADER_STAFF_UNID||
+					strtoupper($csvd['headline'][1])!=HEADER_STAFF_NRIC||
+					strtoupper($csvd['headline'][2])!=HEADER_STAFF_NAME)
 			{
 				throw new Exception('Invalid format?!');
 			}
@@ -70,8 +71,11 @@ try {
 			foreach ($csvd['dataline'] as $line) {
 				// fixed index
 				$unid = strtoupper(trim($line[0]));
-				$nric = strtoupper(trim($line[1]));
+				$nrid = strtoupper(trim($line[1]));
 				$name = strtoupper(trim($line[2]));
+				if (empty($unid)||empty($nrid)||empty($name)) {
+					throw new Exception('Empty fields!');
+				}
 				$staf = $data->findStaff($unid);
 				if ($staf['stat']==false) {
 					$data->createStaff($unid,$name,$nrid);
@@ -79,20 +83,37 @@ try {
 					if ($staf['stat']==false) {
 						throw new Exception('Something is WRONG!');
 					}
+				} else {
+					throw new Exception('Staff already in list!');
 				}
-			}
-			break;
-		case TASK_STAFF_VIEW_STAFF:
-			$staf = $data->listStaff();
-			if ($staf['stat']==false) {
-				throw new Exception('Something is WRONG!');
 			}
 			break;
 		default:
 			throw new Exception('Unknown error?!');
 	}
+	// create HTML
+	require_once dirname(__FILE__).'/HTMLDocument.php';
+	// create doc generator
+	$dohtml = new HTMLDocument(MY1APP_TITLE);
+	// create page title
+	$dotemp = new HTMLObject('h1');
+	$dotemp->insert_inner(MY1APP_TITLE);
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
+	// create message
+	$dotemp = new HTMLObject('p');
+	$dotemp->insert_inner('Done.');
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
+	// create command links
+	$dotemp = new HTMLObject('p');
+	$dotemp->insert_inner('<a href="javascript:history.back()">Back</a>');
+	$dotemp->do_1skipline();
+	$dohtml->append_2body($dotemp);
+	// generate HTML
+	echo $dohtml->write_html();
+	exit();
 } catch (Exception $error) {
-	session_destroy();
 	if (DEBUG_MODE) {
 		$message = $error->getMessage();
 	} else {
