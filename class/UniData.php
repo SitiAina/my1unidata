@@ -38,7 +38,43 @@ class UniData extends Base {
 		return [ "unid" => $this->_dounid, "name" => $this->_doname,
 			"staf" => false ];
 	}
+	function modifyPass($username, $pass_old, $pass_new) {
+		if ($this->_dounid==null) {
+			$this->throw_debug('modifyPass general error!');
+		}
+		$prep = "SELECT id FROM students WHERE unid=? AND pass=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$pass_old,PDO::PARAM_STR)) {
+			$this->throw_debug('modifyPass bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyPass execute error!');
+		}
+		$item = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($item==false) {
+			$this->throw_debug('modifyPass validate error!');
+		}
+		$stmt->closeCursor();
+		$prep = "UPDATE students SET pass=? WHERE id=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$pass_new,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$item['id'],PDO::PARAM_INT)) {
+			$this->throw_debug('modifyPass bind2 error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyPass execute2 error!');
+		}
+		$stmt->closeCursor();
+		return true;
+	}
 	function selectSession($sessem) {
+		$year1 = intval($sessem/100000);
+		$year2 = intval(($sessem%100000)/10);
+		$dosem = intval($sessem%10);
+		if ($year2!=($year1+1)||$dosem>3||$dosem<1) {
+			$this->throw_debug('Invalid Session/Semester selection!');
+		}
 		$this->_sessem = intval($sessem); // should i check for format?
 	}
 	function checkStudents() {
@@ -199,6 +235,7 @@ class UniData extends Base {
 				array("name"=>"raw","type"=>"REAL"),
 				array("name"=>"pct","type"=>"REAL"),
 				array("name"=>"grp","type"=>"INTEGER"),
+				array("name"=>"sub","type"=>"INTEGER"),
 				array("name"=>"flag","type"=>"INTEGER")
 			);
 			$tmore = array();
@@ -208,13 +245,18 @@ class UniData extends Base {
 		}
 	}
 	function findCourseComponents($coid,$name=null) {
+		if ($this->_sessem==null) {
+			$this->throw_debug('Session/Semester NOT selected!');
+		}
 		$result = [];
-		$prep = "SELECT id, name, raw, pct, grp, flag FROM courses_components ";
+		$prep = "SELECT id, name, raw, pct, grp, sub, flag ";
+		$prep = $prep."FROM courses_components ";
 		$prep = $prep."WHERE coid=? AND ssem=?";
 		if ($name!=null) {
 			$prep = $prep." AND name=?";
 			$name = strtolower($name);
 		}
+		$prep = $prep." ORDER BY grp ASC, sub ASC";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
 				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
@@ -235,6 +277,7 @@ class UniData extends Base {
 				$item['id'] = intval($item['id']); // make sure an integer?
 				$item['flag'] = intval($item['flag']);
 				$item['grp'] = intval($item['grp']);
+				$item['sub'] = intval($item['sub']);
 				$item['raw'] = floatval($item['raw']);
 				$item['pct'] = floatval($item['pct']);
 				$count++;
@@ -246,28 +289,6 @@ class UniData extends Base {
 			$result['stat'] = false;
 		}
 		return $result;
-	}
-	function createCourseComponent($coid,$name,$raw,$pct,$grp) {
-		$coid = intval($coid);
-		$name = strtolower($name);
-		$grp = intval($grp);
-		$raw = floatval($raw);
-		$pct = floatval($pct);
-		$prep = "INSERT INTO courses_components ";
-		$prep = $prep."(ssem,coid,name,raw,pct,grp,flag) ";
-		$prep = $prep."VALUES (:ssem,:coid,:name,:raw,:pct,:grp,1)";
-		$stmt = $this->prepare($prep);
-		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
-		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
-		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
-		$stmt->bindValue(':raw',$raw,PDO::PARAM_STR); // no PARAM_REAL!
-		$stmt->bindValue(':pct',$pct,PDO::PARAM_STR);
-		$stmt->bindValue(':grp',$grp,PDO::PARAM_INT);
-		$temp = $stmt->execute();
-		$stmt->closeCursor();
-		if ($temp==false) {
-			$this->throw_debug('createCourseComponent Failed');
-		}
 	}
 	function checkCourseMarkTable($table,$coid) {
 		$check = $this->findCourseComponents($coid);

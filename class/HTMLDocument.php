@@ -43,7 +43,7 @@ class HTMLObject {
 		$this->_init = substr($this->_init,0,strrpos($this->_init,">")).
 			" style=\"".$style."\">";
 	}
-	function insert_keyvalue($key,$value,$noquote) {
+	function insert_keyvalue($key,$value,$noquote=false) {
 		$do_quote="\"";
 		if (isset($noquote)&&$noquote==true) $do_quote="";
 		$this->_init = substr($this->_init,0,strrpos($this->_init,">")).

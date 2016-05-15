@@ -1,5 +1,5 @@
 <?php
-define('DEFAULT_DBPATH',dirname(__FILE__).'/data');
+define('DEFAULT_DBPATH',dirname(__FILE__).'/../data');
 class Base {
 	protected $_dbmain;
 	protected $_dbfile;

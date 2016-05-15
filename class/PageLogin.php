@@ -1,73 +1,11 @@
 <?php
-require_once dirname(__FILE__).'/config.php';
-try {
-	session_start();
-	if (!isset($_SESSION['username'])||!isset($_SESSION['userpass'])||
-			!isset($_SESSION['usertype'])) {
-		header('Location: login.php');
-		exit();
+require_once dirname(__FILE__).'/Page.php';
+class PageLogin extends Page {
+	function __construct($title='Login') {
+		parent::__construct($title);
 	}
-	$type = "UniData";
-	if (intval($_SESSION['usertype'])==MY1STAFF_LOGIN) {
-		$type = $type."Staff";
-	}
-	require_once dirname(__FILE__).'/'.$type.'.php';
-	$data = new $type();
-	$pass = $data->validateUser($_SESSION['username'],$_SESSION['userpass']);
-	if ($pass!==true)
-		throw new Exception('Invalid login!');
-	$user = $data->getProfile();
-	// check if this is a POST (modify request!)
-	if ($_SERVER['REQUEST_METHOD']=='POST') {
-		if (!array_key_exists('user',$_POST)&&
-				!array_key_exists('pass',$_POST)&&
-				!array_key_exists('pasX',$_POST)&&
-				!array_key_exists('pasY',$_POST)) {
-			throw new Exception('Invalid POST!');
-		}
-		// filter here as well??
-		if ($_POST['pasX']!=$_POST['pasY']) {
-			throw new Exception('Mismatched new password!');
-		}
-		$username = $_POST['user'];
-		$pass_old = $_POST['pass'];
-		$pass_new = $_POST['pasX'];
-		// filter here as well??
-		if (($username!=$_SESSION['username'])||
-				($pass_old!=$_SESSION['userpass'])) {
-			throw new Exception('Verification failed!');
-		}
-		$pass = $data->modifyPass($username, $pass_old, $pass_new);
-		if ($pass!==true) {
-			throw new Exception('Password change failed!');
-		}
-		// update session?
-		$_SESSION['userpass'] = $pass_new;
-		// create HTML
-		require_once dirname(__FILE__).'/HTMLDocument.php';
-		// create doc generator
-		$dohtml = new HTMLDocument(MY1APP_TITLE);
-		// create page title
-		$dotemp = new HTMLObject('h1');
-		$dotemp->insert_inner(MY1APP_TITLE);
-		$dotemp->do_1skipline();
-		$dohtml->append_2body($dotemp);
-		// create message
-		$dotemp = new HTMLObject('p');
-		$dotemp->insert_inner('Password changed for '.$user['name'].'.');
-		$dotemp->do_1skipline();
-		$dohtml->append_2body($dotemp);
-		// create command links
-		$dotemp = new HTMLObject('p');
-		$dotemp->insert_inner('<a href="index.php">Main Page</a>');
-		$dotemp->do_1skipline();
-		$dohtml->append_2body($dotemp);
-		// generate HTML
-		echo $dohtml->write_html();
-		exit();
-	}
-	// prepare page
-	$js_extlib = <<< JSEXTLIB
+	function js_sha512lib() {
+		$js_sha512lib = <<< JS_SHA512LIB
 /*
  * js-sha512 v0.1.1
  * https://github.com/emn178/js-sha512
@@ -348,123 +286,97 @@ try {
 		root.sha512_256 = sha512_256;
 	}
 }(this));
-JSEXTLIB;
-	$js_main = <<< JSMAIN
-function mod_check() {
-	var chk_form = document.getElementById('form_chpass');
-	chk_form.user.value = chk_form.user.placeholder;
-	chk_form.user.disabled = false;
-	chk_form.pass.value = sha512(chk_form.pass.value);
-	chk_form.pasX.value = sha512(chk_form.pasX.value);
-	chk_form.pasY.value = sha512(chk_form.pasY.value);
+JS_SHA512LIB;
+		return $js_sha512lib;
+	}
+	function js_main() {
+		$js_main = <<< JSMAIN
+function login_check() {
+	var chk_form = document.getElementById('form_login');
+	chk_form.password.value = sha512(chk_form.password.value);
 	return true;
 }
 JSMAIN;
-	// create HTML
-	require_once dirname(__FILE__).'/HTMLDocument.php';
-	// create doc generator
-	$dohtml = new HTMLDocument(MY1APP_TITLE);
-	// create external library scripts
-	$dotemp = new JSObject('js_extlib');
-	$dotemp->insert_inner($js_extlib);
-	$dohtml->append_2head($dotemp);
-	// create main script
-	$dotemp = new JSObject('js_main');
-	$dotemp->insert_inner($js_main);
-	$dohtml->append_2body($dotemp);
-	// create page title
-	$dotemp = new HTMLObject('h1');
-	$dotemp->insert_inner(MY1APP_TITLE." - Change Password");
-	$dotemp->do_1skipline();
-	$dohtml->append_2body($dotemp);
-	// create form
-	$doform = new HTMLObject('form');
-	$doform->insert_id('form_chpass');
-	$doform->insert_keyvalue('method','POST');
-	$doform->insert_keyvalue('action','staffmod.php');
-	$doform->insert_keyvalue('onsubmit','javascript:return mod_check();');
-	$doform->do_multiline();
-	$dohtml->append_2body($doform);
-	// create label username
-	$dotemp = new HTMLObject('label');
-	$dotemp->insert_inner('Username');
-	$dotemp->insert_linebr();
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create input username
-	$dotemp = new HTMLObject('input');
-	$dotemp->insert_keyvalue('type','text');
-	$dotemp->insert_keyvalue('name','user');
-	$dotemp->insert_keyvalue('placeholder',$user['unid']);
-	$dotemp->insert_constant('disabled');
-	$dotemp->insert_linebr(2);
-	$dotemp->do_1skipline();
-	$dotemp->remove_tail();
-	$doform->append_object($dotemp);
-	// create label old password
-	$dotemp = new HTMLObject('label');
-	$dotemp->insert_inner('Old Password');
-	$dotemp->insert_linebr();
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create input old password
-	$dotemp = new HTMLObject('input');
-	$dotemp->insert_keyvalue('type','password');
-	$dotemp->insert_keyvalue('name','pass');
-	$dotemp->insert_keyvalue('placeholder','Old Password');
-	$dotemp->remove_tail();
-	$dotemp->insert_linebr(2);
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create label new password 1
-	$dotemp = new HTMLObject('label');
-	$dotemp->insert_inner('New Password');
-	$dotemp->insert_linebr();
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create input new password 1
-	$dotemp = new HTMLObject('input');
-	$dotemp->insert_keyvalue('type','password');
-	$dotemp->insert_keyvalue('name','pasX');
-	$dotemp->insert_keyvalue('placeholder','New Password');
-	$dotemp->remove_tail();
-	$dotemp->insert_linebr(2);
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create label new password 2
-	$dotemp = new HTMLObject('label');
-	$dotemp->insert_inner('New Password (Again)');
-	$dotemp->insert_linebr();
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create input new password 2
-	$dotemp = new HTMLObject('input');
-	$dotemp->insert_keyvalue('type','password');
-	$dotemp->insert_keyvalue('name','pasY');
-	$dotemp->insert_keyvalue('placeholder','New Password (Again)');
-	$dotemp->remove_tail();
-	$dotemp->insert_linebr(2);
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// create submit button
-	$dotemp = new HTMLObject('input');
-	$dotemp->insert_keyvalue('type','submit');
-	$dotemp->insert_keyvalue('value','Change');
-	$dotemp->insert_keyvalue('name','chpass');
-	$dotemp->remove_tail();
-	$dotemp->do_1skipline();
-	$doform->append_object($dotemp);
-	// generate HTML
-	echo $dohtml->write_html();
-} catch (Exception $error) {
-	session_destroy();
-	if (DEBUG_MODE) {
-		$message = $error->getMessage();
-	} else {
-		$message = "General Error!";
+		return $js_main;
 	}
-	header('Content-Type: text/html; charset=utf-8');
-	echo "<h1>Error</h1>".PHP_EOL.$message;
+	function build_page() {
+		// add sha512 js lib
+		$temp = new JSObject('js_sha512lib');
+		$temp->insert_inner($this->js_sha512lib());
+		$this->append_2head($temp);
+		// also use parent build
+		parent::build_page();
+		// create form
+		$form = new HTMLObject('form');
+		$form->insert_id('form_login');
+		$form->insert_keyvalue('method','POST');
+		$form->insert_keyvalue('action','work.php');
+		$form->insert_keyvalue('onsubmit',
+			'javascript:return login_check();');
+		$form->do_multiline();
+		$this->append_2body($form);
+		// create label username
+		$temp = new HTMLObject('label');
+		$temp->insert_inner('Username');
+		$temp->insert_linebr();
+		$temp->do_1skipline();
+		$form->append_object($temp);
+		// create input username
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type','text');
+		$temp->insert_keyvalue('name','username');
+		$temp->insert_keyvalue('placeholder','Username');
+		$temp->remove_tail();
+		$temp->insert_linebr(2);
+		$temp->do_1skipline();
+		$form->append_object($temp);
+		// create label username
+		$temp = new HTMLObject('label');
+		$temp->insert_inner('Password');
+		$temp->insert_linebr();
+		$temp->do_1skipline();
+		$form->append_object($temp);
+		// create input username
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type','password');
+		$temp->insert_keyvalue('name','password');
+		$temp->insert_keyvalue('placeholder','Password');
+		$temp->remove_tail();
+		$temp->insert_linebr(2);
+		$temp->do_1skipline();
+		$form->append_object($temp);
+		// create label select login type
+		$temp = new HTMLObject('label');
+		$temp->insert_inner('Login Type');
+		$temp->insert_linebr();
+		$temp->do_1skipline();
+		$form->append_object($temp);
+		// create select select login type
+		$temp = new HTMLObject('select');
+		$temp->insert_keyvalue('id','typepick');
+		$temp->insert_keyvalue('name','usertype');
+		$temp->do_1skipline();
+		$temp->do_multiline();
+		$form->append_object($temp);
+		// create options for select
+		$opts = new HTMLObject('option');
+		$opts->insert_keyvalue('value',1,true);
+		$opts->insert_inner('Student');
+		$opts->do_1skipline();
+		$temp->append_object($opts);
+		$opts = new HTMLObject('option');
+		$opts->insert_keyvalue('value',MY1STAFF_LOGIN,true);
+		$opts->insert_inner('Staff');
+		$opts->do_1skipline();
+		$temp->append_object($opts);
+		// create submit button
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type','submit');
+		$temp->insert_keyvalue('value','Login');
+		$temp->insert_keyvalue('name','login');
+		$temp->remove_tail();
+		$temp->do_1skipline();
+		$form->append_object($temp);
+	}
 }
-exit();
 ?>

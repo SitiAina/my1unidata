@@ -76,7 +76,8 @@ class UniDataStaff extends UniData {
 	}
 	function findStaff($unid) {
 		$result = [];
-		$prep = "SELECT id, name, nrid, flag FROM staffs WHERE unid=?";
+		$prep = "SELECT id, name, nrid, flag FROM staffs".
+			" WHERE unid=? ORDER BY name";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$unid,PDO::PARAM_STR)) {
 			$this->throw_debug('findStaff bind error!');
@@ -149,7 +150,7 @@ class UniDataStaff extends UniData {
 	}
 	function listCourse() {
 		$result = [];
-		$prep = "SELECT code, name, unit FROM courses";
+		$prep = "SELECT code, name, unit FROM courses ORDER BY code";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->execute()) {
 			$this->throw_debug('listCourse execute error!');
@@ -162,6 +163,103 @@ class UniDataStaff extends UniData {
 			$result['stat'] = false;
 		}
 		return $result;
+	}
+	function createCourseComponent($coid,$name,$raw,$pct,$grp,$sub) {
+		if ($this->_sessem==null) {
+			$this->throw_debug('Session/Semester NOT selected!');
+		}
+		$coid = intval($coid);
+		$name = strtolower($name);
+		$grp = intval($grp);
+		$sub = intval($sub);
+		$raw = floatval($raw);
+		$pct = floatval($pct);
+		$prep = "INSERT INTO courses_components ";
+		$prep = $prep."(ssem,coid,name,raw,pct,grp,sub,flag) ";
+		$prep = $prep."VALUES (:ssem,:coid,:name,:raw,:pct,:grp,:sub,0)";
+		$stmt = $this->prepare($prep);
+		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
+		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
+		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
+		$stmt->bindValue(':raw',$raw,PDO::PARAM_STR); // no PARAM_REAL!
+		$stmt->bindValue(':pct',$pct,PDO::PARAM_STR);
+		$stmt->bindValue(':grp',$grp,PDO::PARAM_INT);
+		$stmt->bindValue(':sub',$sub,PDO::PARAM_INT);
+		$temp = $stmt->execute();
+		$stmt->closeCursor();
+		if ($temp==false) {
+			$this->throw_debug('createCourseComponent Failed');
+		}
+	}
+	function flagCourseComponents($coid,$flag=false) {
+		if ($this->_sessem==null) {
+			$this->throw_debug('Session/Semester NOT selected!');
+		}
+		$prep = "UPDATE courses_components SET flag=";
+		if ($flag===true) $prep = $prep."1 ";
+		else $prep = $prep."0 ";
+		$prep = $prep."WHERE ssem=? AND coid=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$this->_sessem,PDO::PARAM_INT)||
+				!$stmt->bindValue(2,$coid,PDO::PARAM_INT)) {
+			$this->throw_debug('flagCourseComponents bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('flagCourseComponents execute error!');
+		}
+	}
+	function modifyCourseComponent($id,$coid,$name,$raw,$pct,$grp,$sub) {
+		$coid = intval($coid);
+		$name = strtolower($name);
+		$raw = floatval($raw);
+		$pct = floatval($pct);
+		$grp = intval($grp);
+		$sub = intval($sub);
+		$prep = "UPDATE courses_components SET name=? , raw=? , pct=? , ";
+		$prep = $prep."grp=? , sub=? WHERE id=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$name,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$raw,PDO::PARAM_STR)||
+				!$stmt->bindValue(3,$pct,PDO::PARAM_STR)||
+				!$stmt->bindValue(4,$grp,PDO::PARAM_INT)||
+				!$stmt->bindValue(5,$sub,PDO::PARAM_INT)||
+				!$stmt->bindValue(6,$id,PDO::PARAM_INT)) {
+			$this->throw_debug('modifyCourseComponent bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyCourseComponent execute error!');
+		}
+	}
+	function checkCourseComponents($coid) {
+		if ($this->_sessem==null) {
+			$this->throw_debug('Session/Semester NOT selected!');
+		}
+		$coid = intval($coid);
+		$result = [];
+		$prep = "SELECT id, pct FROM courses_components ";
+		$prep = $prep."WHERE coid=? AND ssem=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
+				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
+			$this->throw_debug('checkCourseComponents bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('checkCourseComponents execute error!');
+		}
+		$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($items==false) {
+			$this->throw_debug('checkCourseComponents unknown error!');
+		}
+		$total = 0.0;
+		$check = false;
+		foreach ($items as $item) {
+			$total = $total + floatval($item['pct']);
+		}
+		if ($total===floatval(100)) {
+			$check = true;
+		}
+		$this->flagCourseComponents($coid,$check);
+		return $check;
 	}
 }
 ?>
