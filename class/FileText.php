@@ -90,5 +90,22 @@ class FileText {
 			return $result;
 		}
 	}
+	// send CSV format
+	public function sendCSV($fname,$dhead,$ddata) {
+		// header for CSV download
+		header("Content-type: text/csv; charset=utf-8");
+		header("Content-Disposition: attachment; filename=".$fname);
+		header("Pragma: no-cache");
+		header("Expires: 0");
+		// row for headers
+		if (isset($dhead)) {
+			echo implode(',',$dhead)."\n";
+		}
+		// rows of data
+		foreach ($ddata as $data) {
+			echo implode(',',$data)."\n";
+		}
+		exit();
+	}
 }
 ?>

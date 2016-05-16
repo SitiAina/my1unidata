@@ -66,9 +66,31 @@ class PageStaff extends PageBase {
 		}
 		// create command links
 		$temp = new HTMLObject('p');
+		$temp->insert_inner('<a href="work.php?do=viewstaff&fmt=csv">'.
+			'Download CSV</a>');
+		$temp->do_1skipline();
+		$this->append_2body($temp);
+		$temp = new HTMLObject('p');
 		$temp->insert_inner('<a href="javascript:history.back()">Back</a>');
 		$temp->do_1skipline();
 		$this->append_2body($temp);
+	}
+	function sendCSV() {
+		$staf = $this->_dodata->listStaff();
+		if ($staf['stat']==false) {
+			throw new Exception('Something is WRONG!');
+		}
+		$head =  [ HEADER_STAFF_UNID,
+			HEADER_STAFF_NRIC, HEADER_STAFF_NAME ];
+		$data = [];
+		foreach ($staf['list'] as $item) {
+			if ($item['unid']=='0100000')
+				continue;
+			array_push($data,[$item['unid'],$item['nrid'],$item['name']]);
+		}
+		require_once dirname(__FILE__).'/FileText.php';
+		$fcsv = new FileText();
+		$fcsv->sendCSV('liststaff.csv',$head,$data);
 	}
 }
 ?>

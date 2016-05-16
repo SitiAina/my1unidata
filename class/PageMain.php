@@ -52,21 +52,26 @@ JSMAIN;
 		$temp->insert_linebr(2);
 		$temp->do_1skipline();
 		$form->append_object($temp);
-		// create label data file
-		$temp = new HTMLObject('label');
-		$temp->insert_inner('Select Data File (CSV)');
-		$temp->insert_linebr();
-		$temp->do_1skipline();
-		$form->append_object($temp);
-		// create input data file
-		$temp = new HTMLObject('input');
-		$temp->insert_keyvalue('type','file');
-		$temp->insert_keyvalue('name','dataFile');
-		$temp->insert_keyvalue('id','datafile');
-		$temp->remove_tail();
-		$temp->insert_linebr(2);
-		$temp->do_1skipline();
-		$form->append_object($temp);
+		if ($user['staf']===true) {
+			// create options for select
+			if ($user['alvl']>0) {
+				// create label data file
+				$temp = new HTMLObject('label');
+				$temp->insert_inner('Select Data File (CSV)');
+				$temp->insert_linebr();
+				$temp->do_1skipline();
+				$form->append_object($temp);
+				// create input data file
+				$temp = new HTMLObject('input');
+				$temp->insert_keyvalue('type','file');
+				$temp->insert_keyvalue('name','dataFile');
+				$temp->insert_keyvalue('id','datafile');
+				$temp->remove_tail();
+				$temp->insert_linebr(2);
+				$temp->do_1skipline();
+				$form->append_object($temp);
+			}
+		}
 		// create label select asession
 		$temp = new HTMLObject('label');
 		$temp->insert_inner('Academic Session');
@@ -170,13 +175,13 @@ JSMAIN;
 					'View Staff List</a>');
 				$temp->do_1skipline();
 				$this->append_2body($temp);
+				// create command links
+				$temp = new HTMLObject('p');
+				$temp->insert_inner('<a href="work.php?do=viewcourse">'.
+					'View Course List</a>');
+				$temp->do_1skipline();
+				$this->append_2body($temp);
 			}
-			// create command links
-			$temp = new HTMLObject('p');
-			$temp->insert_inner('<a href="work.php?do=viewcourse">'.
-				'View Course List</a>');
-			$temp->do_1skipline();
-			$this->append_2body($temp);
 		} else {
 		}
 	}

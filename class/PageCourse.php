@@ -58,9 +58,29 @@ class PageCourse extends PageBase {
 		}
 		// create command links
 		$temp = new HTMLObject('p');
+		$temp->insert_inner('<a href="work.php?do=viewcourse&fmt=csv">'.
+			'Download CSV</a>');
+		$temp->do_1skipline();
+		$this->append_2body($temp);
+		$temp = new HTMLObject('p');
 		$temp->insert_inner('<a href="javascript:history.back()">Back</a>');
 		$temp->do_1skipline();
 		$this->append_2body($temp);
+	}
+	function sendCSV() {
+		$cors = $this->_dodata->listCourse();
+		if ($cors['stat']==false) {
+			throw new Exception('Something is WRONG!');
+		}
+		$head =  [ HEADER_COURSE_CODE,
+			HEADER_COURSE_NAME, HEADER_COURSE_UNIT ];
+		$data = [];
+		foreach ($cors['list'] as $item) {
+			array_push($data,[$item['code'],$item['name'],$item['unit']]);
+		}
+		require_once dirname(__FILE__).'/FileText.php';
+		$fcsv = new FileText();
+		$fcsv->sendCSV('listcourse.csv',$head,$data);
 	}
 }
 ?>

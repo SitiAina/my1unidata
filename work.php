@@ -74,11 +74,17 @@ try {
 		} else if ($_GET['do']=='viewstaff') {
 			require_once dirname(__FILE__).'/class/PageStaff.php';
 			$page = new PageStaff();
-			$page->Show();
+			if (isset($_GET['fmt'])&&$_GET['fmt']=='csv')
+				$page->sendCSV();
+			else
+				$page->Show();
 		} else if ($_GET['do']=='viewcourse') {
 			require_once dirname(__FILE__).'/class/PageCourse.php';
 			$page = new PageCourse();
-			$page->Show();
+			if (isset($_GET['fmt'])&&$_GET['fmt']=='csv')
+				$page->sendCSV();
+			else
+				$page->Show();
 		} else {
 			throw new Exception('Invalid Work!');
 		}
@@ -100,16 +106,4 @@ try {
 	echo "<h1>Error</h1>".PHP_EOL.$message;
 }
 exit();
-/*
-	// header for CSV download
-	header("Content-type: text/csv; charset=utf-8");
-	header("Content-Disposition: attachment; filename=stafflist.csv");
-	header("Pragma: no-cache");
-	header("Expires: 0");
-	echo HEADER_STAFF_UNID.",".HEADER_STAFF_NRIC.",".
-		HEADER_STAFF_NAME.",FLAG\n";
-	foreach ($staf['list'] as $item) {
-		echo implode(',',$item);
-	}
-*/
 ?>
