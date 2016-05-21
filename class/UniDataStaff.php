@@ -4,53 +4,13 @@ class UniDataStaff extends UniData {
 	protected $_alevel;
 	function __construct($dbfile=UNIDATA_FILE) {
 		parent::__construct($dbfile);
+		$this->_usrtab = 'staffs';
+		$this->_alevel = null;
 	}
 	function validateUser($username, $userpass) {
-		$prep = "SELECT id,unid,name,alvl FROM staffs WHERE unid=? AND pass=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
-				!$stmt->bindValue(2,$userpass,PDO::PARAM_STR)) {
-			$this->throw_debug('validateUser bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('validateUser execute error!');
-		}
-		$item = $stmt->fetch(PDO::FETCH_ASSOC);
+		$item = parent::validateUser($username, $userpass);
 		if ($item==false) return false;
-		$this->_userid = intval($item['id']); // make sure an integer?
-		$this->_dounid = $item['unid'];
-		$this->_doname = $item['name'];
 		$this->_alevel = intval($item['alvl']);
-		return true;
-	}
-	function modifyPass($username, $pass_old, $pass_new) {
-		if ($this->_dounid==null) {
-			$this->throw_debug('modifyPass general error!');
-		}
-		$prep = "SELECT id FROM staffs WHERE unid=? AND pass=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
-				!$stmt->bindValue(2,$pass_old,PDO::PARAM_STR)) {
-			$this->throw_debug('modifyPass bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('modifyPass execute error!');
-		}
-		$item = $stmt->fetch(PDO::FETCH_ASSOC);
-		if ($item==false) {
-			$this->throw_debug('modifyPass validate error!');
-		}
-		$stmt->closeCursor();
-		$prep = "UPDATE staffs SET pass=? WHERE id=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$pass_new,PDO::PARAM_STR)||
-				!$stmt->bindValue(2,$item['id'],PDO::PARAM_INT)) {
-			$this->throw_debug('modifyPass bind2 error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('modifyPass execute2 error!');
-		}
-		$stmt->closeCursor();
 		return true;
 	}
 	function getProfile() {
@@ -59,8 +19,8 @@ class UniDataStaff extends UniData {
 		$check['alvl'] = $this->_alevel;
 		return $check;
 	}
-	function checkStaff() {
-		$table = "staffs";
+	function checkStaffs() {
+		$table = $this->_usrtab;
 		if (!$this->table_exists($table)) {
 			$tdata = array();
 			array_push($tdata,
@@ -76,7 +36,7 @@ class UniDataStaff extends UniData {
 	}
 	function findStaff($unid) {
 		$result = [];
-		$prep = "SELECT id, name, nrid, flag FROM staffs".
+		$prep = "SELECT id, name, nrid, flag FROM ".$this->_usrtab.
 			" WHERE unid=? ORDER BY name";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$unid,PDO::PARAM_STR)) {
@@ -102,7 +62,8 @@ class UniDataStaff extends UniData {
 		$nrid = strtoupper($nrid);
 		$alvl = intval($alvl);
 		$hash = hash('sha512',$nrid,false);
-		$prep = "INSERT INTO staffs (unid,pass,name,nrid,alvl,flag) ".
+		$prep = "INSERT INTO ".$this->_usrtab.
+			" (unid,pass,name,nrid,alvl,flag) ".
 			"VALUES (:unid,:pass,:name,:nrid,:alvl,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':unid',$unid,PDO::PARAM_STR);
@@ -118,7 +79,7 @@ class UniDataStaff extends UniData {
 	}
 	function listStaff() {
 		$result = [];
-		$prep = "SELECT unid, nrid, name, flag FROM staffs";
+		$prep = "SELECT unid, nrid, name, flag FROM ".$this->_usrtab;
 		$stmt = $this->prepare($prep);
 		if (!$stmt->execute()) {
 			$this->throw_debug('listStaff execute error!');
@@ -163,6 +124,23 @@ class UniDataStaff extends UniData {
 			$result['stat'] = false;
 		}
 		return $result;
+	}
+	function modifyCourse($id,$code,$name,$unit) {
+		$code = strtoupper($code);
+		$name = strtoupper($name);
+		$unit = intval($unit);
+		$id = intval($id);
+		$prep = "UPDATE courses SET code=? , name=? , unit=? WHERE id=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$code,PDO::PARAM_STR)||
+				!$stmt->bindValue(2,$name,PDO::PARAM_STR)||
+				!$stmt->bindValue(3,$unit,PDO::PARAM_INT)||
+				!$stmt->bindValue(4,$id,PDO::PARAM_INT)) {
+			$this->throw_debug('modifyCourse bind error!');
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('modifyCourse execute error!');
+		}
 	}
 	function createCourseComponent($coid,$name,$raw,$pct,$grp,$sub) {
 		if ($this->_sessem==null) {

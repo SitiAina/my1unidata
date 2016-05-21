@@ -37,9 +37,23 @@ try {
 			$_SESSION['pass_new'] = $pass_new;
 			header('Location: work.php?do=chpass');
 			exit();
-		} else if (isset($_GET['do'])&&$_GET['do']=='command') {
+		} else if (array_key_exists('userId',$_POST)&&
+				array_key_exists('aCommand',$_POST)) {
+			$_POST["staffId"] = $_POST["userId"];
 			require_once dirname(__FILE__).'/class/PageLoad.php';
 			$page = new PageLoad();
+			$page->Show();
+		} else if (array_key_exists('cCode',$_POST)&&
+				array_key_exists('cName',$_POST)&&
+				array_key_exists('cUnit',$_POST)&&
+				array_key_exists('cCoId',$_POST)) {
+			if (empty($_POST['cCode'])||empty($_POST['cName'])||
+					empty($_POST['cUnit'])||empty($_POST['cCoId'])) {
+				throw new Exception('Invalid course info?!');
+			}
+			require_once dirname(__FILE__).'/class/PageEdit.php';
+			$page = new PageEdit($_POST['cCoId'],$_POST['cCode'],
+				$_POST['cName'],$_POST['cUnit']);
 			$page->Show();
 		} else {
 			throw new Exception('Invalid Post!');
@@ -69,8 +83,7 @@ try {
 			$page = new PagePassCh();
 			$page->Show();
 		} else if ($_GET['do']=='command') {
-
-
+			throw new Exception('In progress!');
 		} else if ($_GET['do']=='viewstaff') {
 			require_once dirname(__FILE__).'/class/PageStaff.php';
 			$page = new PageStaff();
@@ -85,6 +98,13 @@ try {
 				$page->sendCSV();
 			else
 				$page->Show();
+		} else if ($_GET['do']=='editcourse') {
+			if (!isset($_GET['code'])) {
+				throw new Exception('Invalid course!');
+			}
+			require_once dirname(__FILE__).'/class/PageCourseEdit.php';
+			$page = new PageCourseEdit($_GET['code']);
+			$page->Show();
 		} else {
 			throw new Exception('Invalid Work!');
 		}

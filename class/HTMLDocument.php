@@ -165,6 +165,64 @@ class HTMLHead extends HTMLObject {
 	}
 }
 
+class HTMLForm extends HTMLObject {
+	function __construct($id,$action,$onsubmit=null) {
+		parent::__construct('form');
+		$this->insert_id($id);
+		$this->insert_keyvalue('method','POST');
+		$this->insert_keyvalue('action',$action);
+		if ($onsubmit!=null) {
+			$this->insert_keyvalue('onsubmit',$onsubmit);
+		}
+		// form is multi-line
+		$this->do_multiline();
+	}
+	function create_input($label,$type,$name,
+			$hold=null,$value=null,$noquote=false,$noedit=false) {
+		// create label
+		$temp = new HTMLObject('label');
+		$temp->insert_inner($label);
+		$temp->insert_linebr();
+		$temp->do_1skipline();
+		$this->append_object($temp);
+		// create input
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type',$type);
+		$temp->insert_keyvalue('name',$name);
+		if ($hold==null) $hold = $name;
+		if ($value==null)
+			$temp->insert_keyvalue('placeholder',$hold);
+		else
+			$temp->insert_keyvalue('value',$value,$noquote);
+		if ($noedit===true) {
+			$temp->insert_constant('disabled');
+		}
+		$temp->remove_tail();
+		$temp->insert_linebr(2);
+		$temp->do_1skipline();
+		$this->append_object($temp);
+	}
+	function create_input_hidden($name,$value,$noquote=false) {
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type','hidden');
+		$temp->insert_keyvalue('name',$name);
+		$temp->insert_keyvalue('value',$value,$noquote);
+		$temp->remove_tail();
+		$temp->do_1skipline();
+		$this->append_object($temp);
+	}
+	function create_submit($label,$name) {
+		// create submit button
+		$temp = new HTMLObject('input');
+		$temp->insert_keyvalue('type','submit');
+		$temp->insert_keyvalue('value',$label);
+		$temp->insert_keyvalue('name',$name);
+		$temp->remove_tail();
+		$temp->do_1skipline();
+		$this->append_object($temp);
+	}
+}
+
 class HTMLDocument extends HTMLObject {
 	protected $_head;
 	protected $_body;

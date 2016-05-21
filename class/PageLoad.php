@@ -1,6 +1,6 @@
 <?php
-require_once dirname(__FILE__).'/PageBase.php';
-class PageLoad extends PageBase {
+require_once dirname(__FILE__).'/PageDone.php';
+class PageLoad extends PageDone {
 	function __construct() {
 		parent::__construct();
 		$user = $this->_dodata->getProfile();
@@ -109,18 +109,7 @@ class PageLoad extends PageBase {
 		}
 	}
 	function build_page() {
-		// also use parent build
 		parent::build_page();
-		// create message
-		$temp = new HTMLObject('p');
-		$temp->insert_inner('Done.');
-		$temp->do_1skipline();
-		$this->append_2body($temp);
-		// create command links
-		$temp = new HTMLObject('p');
-		$temp->insert_inner('<a href="javascript:history.back()">Back</a>');
-		$temp->do_1skipline();
-		$this->append_2body($temp);
 	}
 }
 ?>

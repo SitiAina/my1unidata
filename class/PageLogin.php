@@ -291,7 +291,7 @@ JS_SHA512LIB;
 	}
 	function js_main() {
 		$js_main = <<< JSMAIN
-function login_check() {
+function post_check() {
 	var chk_form = document.getElementById('form_login');
 	chk_form.password.value = sha512(chk_form.password.value);
 	return true;
@@ -312,7 +312,7 @@ JSMAIN;
 		$form->insert_keyvalue('method','POST');
 		$form->insert_keyvalue('action','work.php');
 		$form->insert_keyvalue('onsubmit',
-			'javascript:return login_check();');
+			'javascript:return post_check();');
 		$form->do_multiline();
 		$this->append_2body($form);
 		// create label username

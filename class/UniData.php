@@ -3,6 +3,7 @@ require_once dirname(__FILE__).'/Base.php';
 define('UNIDATA_FILE','unidata.sqlite');
 class UniData extends Base {
 	protected $_userid;
+	protected $_usrtab;
 	protected $_dounid;
 	protected $_doname;
 	protected $_sessem; // session semester YYYYNNNNS format
@@ -10,15 +11,25 @@ class UniData extends Base {
 	function __construct($dbfile=UNIDATA_FILE) {
 		parent::__construct($dbfile);
 		$this->_userid = null;
+		$this->_usrtab = 'students';
 		$this->_dounid = null;
 		$this->_doname = null;
 		$this->_sessem = null;
 		$this->_doskip = [ 'stid','matrik','nama','name','id','prog',
 			'lgrp','flag','grp','lab' ];
 	}
+	function selectSession($sessem) {
+		$year1 = intval($sessem/100000);
+		$year2 = intval(($sessem%100000)/10);
+		$dosem = intval($sessem%10);
+		if ($year2!=($year1+1)||$dosem>3||$dosem<1) {
+			$this->throw_debug('Invalid Session/Semester selection!');
+		}
+		$this->_sessem = intval($sessem); // should i check for format?
+	}
 	function validateUser($username, $userpass) {
 		// hashing done by clients
-		$prep = "SELECT id,unid,name FROM students WHERE unid=? AND pass=?";
+		$prep = "SELECT * FROM ".$this->_usrtab." WHERE unid=? AND pass=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
 				!$stmt->bindValue(2,$userpass,PDO::PARAM_STR)) {
@@ -42,7 +53,7 @@ class UniData extends Base {
 		if ($this->_dounid==null) {
 			$this->throw_debug('modifyPass general error!');
 		}
-		$prep = "SELECT id FROM students WHERE unid=? AND pass=?";
+		$prep = "SELECT id FROM ".$this->_usrtab." WHERE unid=? AND pass=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$username,PDO::PARAM_STR)||
 				!$stmt->bindValue(2,$pass_old,PDO::PARAM_STR)) {
@@ -56,7 +67,7 @@ class UniData extends Base {
 			$this->throw_debug('modifyPass validate error!');
 		}
 		$stmt->closeCursor();
-		$prep = "UPDATE students SET pass=? WHERE id=?";
+		$prep = "UPDATE ".$this->_usrtab." SET pass=? WHERE id=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$pass_new,PDO::PARAM_STR)||
 				!$stmt->bindValue(2,$item['id'],PDO::PARAM_INT)) {
@@ -68,17 +79,8 @@ class UniData extends Base {
 		$stmt->closeCursor();
 		return true;
 	}
-	function selectSession($sessem) {
-		$year1 = intval($sessem/100000);
-		$year2 = intval(($sessem%100000)/10);
-		$dosem = intval($sessem%10);
-		if ($year2!=($year1+1)||$dosem>3||$dosem<1) {
-			$this->throw_debug('Invalid Session/Semester selection!');
-		}
-		$this->_sessem = intval($sessem); // should i check for format?
-	}
 	function checkStudents() {
-		$table = "students";
+		$table = $this->_usrtab;
 		if (!$this->table_exists($table)) {
 			$tdata = array();
 			array_push($tdata,
@@ -94,7 +96,8 @@ class UniData extends Base {
 	}
 	function findStudent($unid) {
 		$result = [];
-		$prep = "SELECT id, name, nrid, flag FROM students WHERE unid=?";
+		$prep = "SELECT id, name, nrid, flag FROM ".
+			$this->_usrtab." WHERE unid=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$unid,PDO::PARAM_STR)) {
 			$this->throw_debug('findStudent bind error!');
@@ -117,7 +120,7 @@ class UniData extends Base {
 		$name = strtoupper($name);
 		$nrid = strtoupper($nrid);
 		$hash = hash('sha512',$nrid,false);
-		$prep = "INSERT INTO students (unid,pass,name,nrid,flag) ".
+		$prep = "INSERT INTO ".$this->_usrtab." (unid,pass,name,nrid,flag) ".
 			"VALUES (:unid,:pass,:name,:nrid,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':unid',$unid,PDO::PARAM_STR);

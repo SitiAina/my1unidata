@@ -6,7 +6,7 @@ class PageMain extends PageBase {
 	}
 	function js_main() {
 		$js_main = <<< JSMAIN
-function mod_check() {
+function post_check() {
 	var chk_form = document.getElementById('form_command');
 	chk_form.userId.value = chk_form.userId.placeholder;
 	chk_form.userId.disabled = false;
@@ -30,9 +30,9 @@ JSMAIN;
 		$form = new HTMLObject('form');
 		$form->insert_id('form_command');
 		$form->insert_keyvalue('method','POST');
-		$form->insert_keyvalue('action','work.php?do=command');
+		$form->insert_keyvalue('action','work.php');
 		$form->insert_keyvalue('enctype','multipart/form-data');
-		$form->insert_keyvalue('onsubmit','javascript:return mod_check();');
+		$form->insert_keyvalue('onsubmit','javascript:return post_check();');
 		$form->do_multiline();
 		$this->append_2body($form);
 		// create label user id
@@ -162,7 +162,7 @@ JSMAIN;
 			$temp = new HTMLObject('input');
 			$temp->insert_keyvalue('type','submit');
 			$temp->insert_keyvalue('value','Process Command');
-			$temp->insert_keyvalue('name','submit');
+			$temp->insert_keyvalue('name','process');
 			$temp->remove_tail();
 			$temp->insert_linebr(2);
 			$temp->do_1skipline();

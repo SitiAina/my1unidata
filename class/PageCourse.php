@@ -39,7 +39,9 @@ class PageCourse extends PageBase {
 				$_row->do_1skipline();
 				$_tab->append_object($_row);
 				$_col = new HTMLObject('td');
-				$_col->insert_inner($item['code']);
+				$_col->insert_inner($item['code'].
+					'&nbsp;&nbsp;[<a href="work.php?do=editcourse&'.
+					'code='.$item['code'].'">Modify</a>]');
 				$_row->append_object($_col);
 				$_col = new HTMLObject('td');
 				$_col->insert_inner($item['name']);
