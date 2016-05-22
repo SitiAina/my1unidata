@@ -82,8 +82,6 @@ try {
 			require_once dirname(__FILE__).'/class/PagePassCh.php';
 			$page = new PagePassCh();
 			$page->Show();
-		} else if ($_GET['do']=='command') {
-			throw new Exception('In progress!');
 		} else if ($_GET['do']=='viewstaff') {
 			require_once dirname(__FILE__).'/class/PageStaff.php';
 			$page = new PageStaff();
@@ -100,10 +98,17 @@ try {
 				$page->Show();
 		} else if ($_GET['do']=='editcourse') {
 			if (!isset($_GET['code'])) {
-				throw new Exception('Invalid course!');
+				throw new Exception('Invalid course edit!');
 			}
 			require_once dirname(__FILE__).'/class/PageCourseEdit.php';
 			$page = new PageCourseEdit($_GET['code']);
+			$page->Show();
+		} else if ($_GET['do']=='impcourse') {
+			if (!isset($_GET['ssem'])||!isset($_GET['code'])) {
+				throw new Exception('Invalid course implementation!');
+			}
+			require_once dirname(__FILE__).'/class/PageSemCourse.php';
+			$page = new PageSemCourse($_GET['ssem'],$_GET['code']);
 			$page->Show();
 		} else {
 			throw new Exception('Invalid Work!');

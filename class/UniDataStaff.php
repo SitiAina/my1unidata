@@ -167,8 +167,9 @@ class UniDataStaff extends UniData {
 			array_push($data,
 				array("which"=>"T1.ssem","alias"=>"ssem"),
 				array("which"=>"T2.code","alias"=>"course"),
-				array("which"=>"T3.name","alias"=>"name"),
-				array("which"=>"T3.unid","alias"=>"staff")
+				array("which"=>"T2.name","alias"=>"coursename"),
+				array("which"=>"T3.unid","alias"=>"staff"),
+				array("which"=>"T3.name","alias"=>"staffname")
 			);
 			$more = array();
 			array_push($more," FROM courses_staffs T1, courses T2, ",
@@ -228,7 +229,7 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('Session/Semester NOT selected!');
 		}
 		$coid = intval($coid);
-		$name = strtolower($name);
+		$name = strtoupper($name);
 		$grp = intval($grp);
 		$sub = intval($sub);
 		$raw = floatval($raw);

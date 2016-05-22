@@ -28,6 +28,9 @@ class UniData extends Base {
 			$this->throw_debug('Invalid Session/Semester selection!');
 		}
 		$this->_sessem = intval($sessem);
+		$check = "Academic Session ".$year1."/".$year2;
+		$check = $check." Semester ".$dosem;
+		return $check;
 	}
 	function validateUser($username, $userpass) {
 		// hashing done by clients
@@ -172,6 +175,73 @@ class UniData extends Base {
 		}
 		return $result;
 	}
+	function checkCoursesComponents() {
+		$table = "courses_components";
+		if (!$this->table_exists($table)) {
+			$tdata = array();
+			array_push($tdata,
+				array("name"=>"id","type"=>"INTEGER PRIMARY KEY"),
+				array("name"=>"ssem","type"=>"INTEGER"),
+				array("name"=>"coid","type"=>"INTEGER"),
+				array("name"=>"name","type"=>"TEXT"),
+				array("name"=>"raw","type"=>"REAL"),
+				array("name"=>"pct","type"=>"REAL"),
+				array("name"=>"grp","type"=>"INTEGER"),
+				array("name"=>"sub","type"=>"INTEGER"),
+				array("name"=>"flag","type"=>"INTEGER")
+			);
+			$tmore = array();
+			array_push($tmore,"UNIQUE (ssem,coid,name)",
+				"FOREIGN KEY(coid) REFERENCES courses(id)");
+			$this->table_create($table,$tdata,$tmore);
+		}
+	}
+	function findCourseComponents($coid,$name=null) {
+		if ($this->_sessem==null) {
+			$this->throw_debug('Session/Semester NOT selected!');
+		}
+		$result = [];
+		$prep = "SELECT id, name, raw, pct, grp, sub, flag ";
+		$prep = $prep."FROM courses_components ";
+		$prep = $prep."WHERE coid=? AND ssem=?";
+		if ($name!=null) {
+			$prep = $prep." AND name=?";
+			$name = strtoupper($name);
+		}
+		$prep = $prep." ORDER BY grp ASC, sub ASC";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
+				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
+			$this->throw_debug('findCourseComponent bind error!');
+		}
+		if ($name!=null) {
+			if (!$stmt->bindValue(3,$name,PDO::PARAM_STR)) {
+				$this->throw_debug('findCourseComponent bind error!');
+			}
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('findCourseComponent execute error!');
+		}
+		$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($items!=false) {
+			$count = 0;
+			foreach ($items as $item) {
+				$item['id'] = intval($item['id']); // make sure an integer?
+				$item['flag'] = intval($item['flag']);
+				$item['grp'] = intval($item['grp']);
+				$item['sub'] = intval($item['sub']);
+				$item['raw'] = floatval($item['raw']);
+				$item['pct'] = floatval($item['pct']);
+				$count++;
+			}
+			$result['list'] = $items;
+			$result['count'] = $count;
+			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
+	}
 	function checkCoursesStudents() {
 		$table = "courses_students";
 		if (!$this->table_exists($table)) {
@@ -228,73 +298,6 @@ class UniData extends Base {
 		if ($temp==false) {
 			$this->throw_debug('createCourseStudent Failed');
 		}
-	}
-	function checkCoursesComponents() {
-		$table = "courses_components";
-		if (!$this->table_exists($table)) {
-			$tdata = array();
-			array_push($tdata,
-				array("name"=>"id","type"=>"INTEGER PRIMARY KEY"),
-				array("name"=>"ssem","type"=>"INTEGER"),
-				array("name"=>"coid","type"=>"INTEGER"),
-				array("name"=>"name","type"=>"TEXT"),
-				array("name"=>"raw","type"=>"REAL"),
-				array("name"=>"pct","type"=>"REAL"),
-				array("name"=>"grp","type"=>"INTEGER"),
-				array("name"=>"sub","type"=>"INTEGER"),
-				array("name"=>"flag","type"=>"INTEGER")
-			);
-			$tmore = array();
-			array_push($tmore,"UNIQUE (ssem,coid,name)",
-				"FOREIGN KEY(coid) REFERENCES courses(id)");
-			$this->table_create($table,$tdata,$tmore);
-		}
-	}
-	function findCourseComponents($coid,$name=null) {
-		if ($this->_sessem==null) {
-			$this->throw_debug('Session/Semester NOT selected!');
-		}
-		$result = [];
-		$prep = "SELECT id, name, raw, pct, grp, sub, flag ";
-		$prep = $prep."FROM courses_components ";
-		$prep = $prep."WHERE coid=? AND ssem=?";
-		if ($name!=null) {
-			$prep = $prep." AND name=?";
-			$name = strtolower($name);
-		}
-		$prep = $prep." ORDER BY grp ASC, sub ASC";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
-				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
-			$this->throw_debug('findCourseComponent bind error!');
-		}
-		if ($name!=null) {
-			if (!$stmt->bindValue(3,$name,PDO::PARAM_STR)) {
-				$this->throw_debug('findCourseComponent bind error!');
-			}
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('findCourseComponent execute error!');
-		}
-		$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		if ($items!=false) {
-			$count = 0;
-			foreach ($items as $item) {
-				$item['id'] = intval($item['id']); // make sure an integer?
-				$item['flag'] = intval($item['flag']);
-				$item['grp'] = intval($item['grp']);
-				$item['sub'] = intval($item['sub']);
-				$item['raw'] = floatval($item['raw']);
-				$item['pct'] = floatval($item['pct']);
-				$count++;
-			}
-			$result['data'] = $items;
-			$result['count'] = $count;
-			$result['stat'] = true;
-		} else {
-			$result['stat'] = false;
-		}
-		return $result;
 	}
 	function checkCourseMarkTable($table,$coid) {
 		$check = $this->findCourseComponents($coid);

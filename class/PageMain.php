@@ -25,14 +25,17 @@ JSMAIN;
 		if ($user['staf']===true) {
 			$this->_dodata->checkCoursesStaffs();
 			$list = $this->_dodata->listCourseStaff($user['unid']);
-			if ($list['stat']!=true) {
-				$this->throw_debug('Cannot get course implementation list!');
-			}
-			foreach ($list['list'] as $item) {
-				$this->insert_link("work.php?do=nothing",
-					$item['ssem']." - ".$item['course']);
+			if ($list['stat']===true) {
+				$this->insert_para("<br><b>Course Implementations</b>");
+				foreach ($list['list'] as $item) {
+					$this->insert_link("work.php?do=impcourse&ssem=".
+						$item['ssem']."&code=".$item['course'],
+						$item['ssem']." - ".$item['course']." (".
+						$item['coursename'].")");
+				}
 			}
 		}
+		$this->insert_para("<br><b>Course Administration</b>");
 		// create form
 		$form = new HTMLForm('form_command','work.php');
 		$form->insert_keyvalue('enctype','multipart/form-data',
