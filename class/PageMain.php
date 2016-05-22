@@ -48,6 +48,7 @@ JSMAIN;
 		}
 		// selection for semester
 		$opts = [
+			[ 'Academic Session 2015/2016 Semester 2', '201520162', true ],
 			[ 'Academic Session 2015/2016 Semester 1', '201520161', true ],
 			[ 'Academic Session 2014/2015 Semester 2', '201420152', true ],
 			[ 'Academic Session 2014/2015 Semester 1', '201420151', true ]
@@ -66,7 +67,8 @@ JSMAIN;
 		// selection for command
 		if ($user['staf']===true) {
 			$opts = [
-				[ 'Implement a Course', TASK_STAFF_EXECUTE_COURSE,true ]
+				[ 'Implement a Course', TASK_STAFF_EXECUTE_COURSE,true ],
+				[ 'Add Students', TASK_STAFF_ADD_STUDENTS,true ]
 			];
 			if ($user['alvl']>0) {
 				array_unshift($ops,['Create Staff',

@@ -109,7 +109,10 @@ try {
 			}
 			require_once dirname(__FILE__).'/class/PageSemCourse.php';
 			$page = new PageSemCourse($_GET['ssem'],$_GET['code']);
-			$page->Show();
+			if (isset($_GET['fmt'])&&$_GET['fmt']=='csv')
+				$page->sendCSV();
+			else
+				$page->Show();
 		} else {
 			throw new Exception('Invalid Work!');
 		}

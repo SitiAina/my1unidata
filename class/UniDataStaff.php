@@ -197,7 +197,7 @@ class UniDataStaff extends UniData {
 		if ($user!=null) $user = strtoupper($user);
 		else if ($code!=null) $code = strtoupper($code);
 		$result = [];
-		$prep = "SELECT * FROM  courses_staffs_view";
+		$prep = "SELECT * FROM courses_staffs_view";
 		if ($user!=null) $prep = $prep." WHERE staff=?";
 		else if ($code!=null) $prep = $prep." WHERE course=?";
 		$prep = $prep." ORDER BY ssem DESC, COURSE ASC";
@@ -236,7 +236,7 @@ class UniDataStaff extends UniData {
 		$pct = floatval($pct);
 		$prep = "INSERT INTO courses_components ";
 		$prep = $prep."(ssem,coid,name,raw,pct,grp,sub,flag) ";
-		$prep = $prep."VALUES (:ssem,:coid,:name,:raw,:pct,:grp,:sub,0)";
+		$prep = $prep."VALUES (:ssem,:coid,:name,:raw,:pct,:grp,:sub,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
 		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
@@ -251,75 +251,112 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('createCourseComponent Failed');
 		}
 	}
-	function flagCourseComponents($coid,$flag=false) {
-		if ($this->_sessem==null) {
-			$this->throw_debug('Session/Semester NOT selected!');
-		}
-		$prep = "UPDATE courses_components SET flag=";
-		if ($flag===true) $prep = $prep."1 ";
-		else $prep = $prep."0 ";
-		$prep = $prep."WHERE ssem=? AND coid=?";
+	function createStudent($unid,$name,$nrid,$prog) {
+		$unid = strtoupper(trim($unid));
+		$name = strtoupper(trim($name));
+		$nrid = strtoupper(trim($nrid));
+		$hash = hash('sha512',$nrid,false);
+		$prog = strtoupper(preg_replace('/\s+/','',$prog));
+		$prep = "INSERT INTO students (unid,pass,name,nrid,prog,flag)".
+			" VALUES (:unid,:pass,:name,:nrid,:prog,1)";
 		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$this->_sessem,PDO::PARAM_INT)||
-				!$stmt->bindValue(2,$coid,PDO::PARAM_INT)) {
-			$this->throw_debug('flagCourseComponents bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('flagCourseComponents execute error!');
+		$stmt->bindValue(':unid',$unid,PDO::PARAM_STR);
+		$stmt->bindValue(':pass',$hash,PDO::PARAM_STR);
+		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
+		$stmt->bindValue(':nrid',$nrid,PDO::PARAM_STR);
+		$stmt->bindValue(':prog',$prog,PDO::PARAM_STR);
+		$temp = $stmt->execute();
+		$stmt->closeCursor();
+		if ($temp==false) {
+			$this->throw_debug('createStudent Failed');
 		}
 	}
-	function modifyCourseComponent($id,$coid,$name,$raw,$pct,$grp,$sub) {
-		$coid = intval($coid);
-		$name = strtolower($name);
-		$raw = floatval($raw);
-		$pct = floatval($pct);
-		$grp = intval($grp);
-		$sub = intval($sub);
-		$prep = "UPDATE courses_components SET name=? , raw=? , pct=? , ";
-		$prep = $prep."grp=? , sub=? WHERE id=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$name,PDO::PARAM_STR)||
-				!$stmt->bindValue(2,$raw,PDO::PARAM_STR)||
-				!$stmt->bindValue(3,$pct,PDO::PARAM_STR)||
-				!$stmt->bindValue(4,$grp,PDO::PARAM_INT)||
-				!$stmt->bindValue(5,$sub,PDO::PARAM_INT)||
-				!$stmt->bindValue(6,$id,PDO::PARAM_INT)) {
-			$this->throw_debug('modifyCourseComponent bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('modifyCourseComponent execute error!');
-		}
-	}
-	function validateCourseComponents($coid) {
-		if ($this->_sessem==null) {
-			$this->throw_debug('Session/Semester NOT selected!');
-		}
-		$coid = intval($coid);
+	function listCourseStudent($table) {
 		$result = [];
-		$prep = "SELECT id, pct FROM courses_components ";
-		$prep = $prep."WHERE coid=? AND ssem=?";
+		$prep = "SELECT T2.name, T2.unid, T2.nrid, ".
+			"T2.prog, T1.* FROM ".$table." T1, students T2 WHERE ".
+			"T1.stid=T2.id";
 		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
-				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
-			$this->throw_debug('checkCourseComponents bind error!');
+		if (!$stmt->execute()) {
+			$this->throw_debug('listCourseStudent execute error!');
+		}
+		$list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($list!=false) {
+			foreach ($list as $item) {
+				$item['stid'] = intval($item['stid']);
+			}
+			$result['list'] = $list;
+			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
+	}
+	function createCourseStudent($table,$stid,$lgrp,$mgrp) {
+		$stid = intval($stid);
+		$lgrp = strtoupper(trim($lgrp));
+		$mgrp = strtoupper(trim($mgrp));
+		$prep = "INSERT INTO ".$table;
+		$prep = $prep." (stid,lgrp,mgrp,flag)";
+		$prep = $prep." VALUES (:stid,:lgrp,:mgrp,1)";
+		$stmt = $this->prepare($prep);
+		$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
+		$stmt->bindValue(':lgrp',$lgrp,PDO::PARAM_STR);
+		$stmt->bindValue(':mgrp',$mgrp,PDO::PARAM_STR);
+		$temp = $stmt->execute();
+		$stmt->closeCursor();
+		if ($temp==false) {
+			$this->throw_debug('createCourseStudent Failed');
+		}
+	}
+	function updateCourseStudentMark($table,$stid,$col,$val) {
+		$prep = "UPDATE ".$table." SET ".$col."=".$val." WHERE stid=?";
+		$stmt = $this->prepare($prep);
+		if (!$stmt->bindValue(1,$stid,PDO::PARAM_INT)) {
+			$this->throw_debug('updateCourseStudentMark bind error!');
 		}
 		if (!$stmt->execute()) {
-			$this->throw_debug('checkCourseComponents execute error!');
+			$this->throw_debug('updateCourseStudentMark execute error!');
 		}
-		$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-		if ($items==false) {
-			$this->throw_debug('checkCourseComponents unknown error!');
+	}
+	function updateCourseMarkTable($table,$rdata) {
+		$test = array_shift($rdata);
+		if (!isset($test['col'])||$test['col']!='stid') {
+			$this->throw_debug('updateCourseMarkTable no stid!');
 		}
-		$total = 0.0;
-		$check = false;
-		foreach ($items as $item) {
-			$total = $total + floatval($item['pct']);
+		$stid = $test['val'];
+		$test = array_shift($rdata);
+		if (!isset($test['col'])||$test['col']!='name') {
+			$this->throw_debug('updateCourseMarkTable no name!');
 		}
-		if ($total===floatval(100)) {
-			$check = true;
+		$name = $test['val'];
+		$test = $this->findCourseMarkStudent($table,$stid);
+		if ($test['stat'] == false) {
+			// create new
+			$prep = "INSERT INTO ".$table;
+			$prep = $prep." (stid,name,flag) ";
+			$prep = $prep."VALUES (:stid,:name,1)";
+			$stmt = $this->prepare($prep);
+			$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
+			$stmt->bindValue(':name',$name,PDO::PARAM_STR);
+			$temp = $stmt->execute();
+			$stmt->closeCursor();
+			if ($temp==false) {
+				$this->throw_debug('createCourseMarkStudent Failed');
+			}
 		}
-		$this->flagCourseComponents($coid,$check);
-		return $check;
+		// update
+		foreach ($rdata as $item) {
+			if (!isset($item['val'])||$item['val']=="")
+				continue;
+			if (isset($item['col'])) {
+				$this->updateCourseMarkStudent($table,$stid,
+					$item['col'],floatval($item['val']));
+			} else if (isset($item['sys'])) {
+				$this->updateCourseMarkStudentS($table,$stid,
+					$item['sys'],strtoupper($item['val']));
+			}
+		}
 	}
 }
 ?>

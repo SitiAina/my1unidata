@@ -86,7 +86,7 @@ class UniData extends Base {
 		return true;
 	}
 	function checkStudents() {
-		$table = $this->_usrtab;
+		$table = "students";
 		if (!$this->table_exists($table)) {
 			$tdata = array();
 			array_push($tdata,
@@ -102,8 +102,7 @@ class UniData extends Base {
 	}
 	function findStudent($unid) {
 		$result = [];
-		$prep = "SELECT id, name, nrid, flag FROM ".
-			$this->_usrtab." WHERE unid=?";
+		$prep = "SELECT id, name, nrid, flag FROM students WHERE unid=?";
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$unid,PDO::PARAM_STR)) {
 			$this->throw_debug('findStudent bind error!');
@@ -121,23 +120,6 @@ class UniData extends Base {
 			$result['stat'] = false;
 		}
 		return $result;
-	}
-	function createStudent($unid,$name,$nrid) {
-		$name = strtoupper($name);
-		$nrid = strtoupper($nrid);
-		$hash = hash('sha512',$nrid,false);
-		$prep = "INSERT INTO ".$this->_usrtab." (unid,pass,name,nrid,flag) ".
-			"VALUES (:unid,:pass,:name,:nrid,1)";
-		$stmt = $this->prepare($prep);
-		$stmt->bindValue(':unid',$unid,PDO::PARAM_STR);
-		$stmt->bindValue(':pass',$hash,PDO::PARAM_STR);
-		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
-		$stmt->bindValue(':nrid',$nrid,PDO::PARAM_STR);
-		$temp = $stmt->execute();
-		$stmt->closeCursor();
-		if ($temp==false) {
-			$this->throw_debug('createStudent Failed');
-		}
 	}
 	function checkCourses() {
 		$table = "courses";
@@ -242,80 +224,23 @@ class UniData extends Base {
 		}
 		return $result;
 	}
-	function checkCoursesStudents() {
-		$table = "courses_students";
-		if (!$this->table_exists($table)) {
-			$tdata = array();
-			array_push($tdata,
-				array("name"=>"id","type"=>"INTEGER PRIMARY KEY"),
-				array("name"=>"ssem","type"=>"INTEGER"),
-				array("name"=>"coid","type"=>"INTEGER"),
-				array("name"=>"stid","type"=>"INTEGER"),
-				array("name"=>"flag","type"=>"INTEGER")
-			);
-			$tmore = array();
-			array_push($tmore,"UNIQUE (ssem,coid,stid)",
-				"FOREIGN KEY(coid) REFERENCES courses(id)",
-				"FOREIGN KEY(stid) REFERENCES students(id)");
-			$this->table_create($table,$tdata,$tmore);
-		}
-	}
-	function findCourseStudent($coid,$stid) {
-		$result = [];
-		$prep = "SELECT id, flag FROM courses_students WHERE coid=? ";
-		$prep = $prep."AND stid=? AND ssem=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
-				!$stmt->bindValue(2,$stid,PDO::PARAM_INT)||
-				!$stmt->bindValue(3,$this->_sessem,PDO::PARAM_INT)) {
-			$this->throw_debug('findCourseStudent bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('findCourseStudent execute error!');
-		}
-		$item = $stmt->fetch(PDO::FETCH_ASSOC);
-		if ($item!=false) {
-			$result = $item;
-			$result['stat'] = true;
-			$result['id'] = intval($item['id']); // make sure an integer?
-			$result['flag'] = intval($item['flag']);
-		} else {
-			$result['stat'] = false;
-		}
-		return $result;
-	}
-	function createCourseStudent($coid,$stid) {
-		$coid = intval($coid);
-		$stid = intval($stid);
-		$prep = "INSERT INTO courses_students (ssem,coid,stid,flag) ".
-			"VALUES (:ssem,:coid,:stid,1)";
-		$stmt = $this->prepare($prep);
-		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
-		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
-		$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
-		$temp = $stmt->execute();
-		$stmt->closeCursor();
-		if ($temp==false) {
-			$this->throw_debug('createCourseStudent Failed');
-		}
-	}
-	function checkCourseMarkTable($table,$coid) {
+	function checkCourseStudent($table,$coid) {
 		$check = $this->findCourseComponents($coid);
 		if ($check['stat']==false) {
-			$this->throw_debug('checkCourseMarkTable find error!');
+			$this->throw_debug('checkCourseStudent find error!');
 		}
 		if (!$this->table_exists($table)) {
 			$tdata = array();
 			array_push($tdata,
 				array("name"=>"id","type"=>"INTEGER PRIMARY KEY"),
 				array("name"=>"stid","type"=>"INTEGER UNIQUE"),
-				array("name"=>"name","type"=>"TEXT"),
-				array("name"=>"prog","type"=>"TEXT"),
 				array("name"=>"lgrp","type"=>"TEXT"),
+				array("name"=>"mgrp","type"=>"TEXT"),
 				array("name"=>"flag","type"=>"INTEGER"));
-			foreach ($check['data'] as $item) {
-				array_push($tdata,
-					array("name"=>$item['name'],"type"=>"REAL"));
+			foreach ($check['list'] as $item) {
+				$name = preg_replace('/\s+/','_',$item['name']);
+				$name = strtolower(preg_replace('/-/','_',$name));
+				array_push($tdata,array("name"=>$name,"type"=>"REAL"));
 			}
 			$tmore = array();
 			array_push($tmore,
@@ -336,280 +261,44 @@ class UniData extends Base {
 			}
 			// check columns
 			$tdata = array();
-			foreach ($check['data'] as $item) {
-				if (array_search($item['name'],$find)===false) {
-					array_push($tdata,
-						array("name"=>$item['name'],"type"=>"REAL"));
+			foreach ($check['list'] as $item) {
+				$name = preg_replace('/\s+/','_',$item['name']);
+				$name = strtolower(preg_replace('/-/','_',$name));
+				if (array_search($name,$find)===false) {
+					array_push($tdata,array("name"=>$name,"type"=>"REAL"));
 				}
 			}
 			if (!empty($tdata))
 				$this->table_addcol($table,$tdata);
 		}
 	}
-	function findCourseMarkStudent($table,$stid) {
+	function findCourseStudent($table,$stid=null) {
 		$result = [];
-		$prep = "SELECT id FROM ".$table." WHERE stid=?";
+		$prep = "SELECT id,stid,lgrp,mgrp,flag FROM ".$table;
+		if ($stid!=null) {
+			$prep = $prep." WHERE stid=?";
+			$stid = intval($stid);
+		}
 		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$stid,PDO::PARAM_STR)) {
-			$this->throw_debug('findCourseMarkStudent bind error!');
+		if ($stid!=null) {
+			if (!$stmt->bindValue(1,$stid,PDO::PARAM_INT)) {
+				$this->throw_debug('findCourseStudent bind error!');
+			}
 		}
 		if (!$stmt->execute()) {
-			$this->throw_debug('findCourseMarkStudent execute error!');
+			$this->throw_debug('findCourseStudent execute error!');
 		}
-		$item = $stmt->fetch(PDO::FETCH_ASSOC);
-		if ($item!=false) {
+		$list = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($list!=false) {
+			foreach ($list as $item) {
+				$item['id'] = intval($item['id']);
+			}
+			$result['list'] = $list;
 			$result['stat'] = true;
-			$result['id'] = intval($item['id']);
 		} else {
 			$result['stat'] = false;
 		}
 		return $result;
-	}
-	function updateCourseMarkStudent($table,$stid,$col,$val) {
-		$prep = "UPDATE ".$table." SET ".$col."=".$val." WHERE stid=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$stid,PDO::PARAM_INT)) {
-			$this->throw_debug('updateCourseMarkStudent bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('updateCourseMarkStudent execute error!');
-		}
-	}
-	function updateCourseMarkStudentS($table,$stid,$col,$val) {
-		$prep = "UPDATE ".$table." SET ".$col."='".$val."' WHERE stid=?";
-		$stmt = $this->prepare($prep);
-		if (!$stmt->bindValue(1,$stid,PDO::PARAM_INT)) {
-			$this->throw_debug('updateCourseMarkStudentS bind error!');
-		}
-		if (!$stmt->execute()) {
-			$this->throw_debug('updateCourseMarkStudentS execute error!');
-		}
-	}
-	function updateCourseMarkTable($table,$rdata) {
-		$test = array_shift($rdata);
-		if (!isset($test['col'])||$test['col']!='stid') {
-			$this->throw_debug('updateCourseMarkTable no stid!');
-		}
-		$stid = $test['val'];
-		$test = array_shift($rdata);
-		if (!isset($test['col'])||$test['col']!='name') {
-			$this->throw_debug('updateCourseMarkTable no name!');
-		}
-		$name = $test['val'];
-		$test = $this->findCourseMarkStudent($table,$stid);
-		if ($test['stat'] == false) {
-			// create new
-			$prep = "INSERT INTO ".$table;
-			$prep = $prep." (stid,name,flag) ";
-			$prep = $prep."VALUES (:stid,:name,1)";
-			$stmt = $this->prepare($prep);
-			$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
-			$stmt->bindValue(':name',$name,PDO::PARAM_STR);
-			$temp = $stmt->execute();
-			$stmt->closeCursor();
-			if ($temp==false) {
-				$this->throw_debug('createCourseMarkStudent Failed');
-			}
-		}
-		// update
-		foreach ($rdata as $item) {
-			if (!isset($item['val'])||$item['val']=="")
-				continue;
-			if (isset($item['col'])) {
-				$this->updateCourseMarkStudent($table,$stid,
-					$item['col'],floatval($item['val']));
-			} else if (isset($item['sys'])) {
-				$this->updateCourseMarkStudentS($table,$stid,
-					$item['sys'],strtoupper($item['val']));
-			}
-		}
-	}
-	function importCSV_CourseInfo($fname,$lcoid,$lname,$lunit) {
-		require_once dirname(__FILE__).'/FileText.php';
-		$file = new FileText();
-		$data = $file->loadCSV($fname);
-		if ($data['stat']===true) {
-			$this->throw_debug('Cannot load course info list!');
-		} else if ($data['rows']==0) {
-			$this->throw_debug('No course info in list!');
-		}
-		// check loaded course list
-		$icoid = -1; $iname = -1; $iunit = -1; $count = 0;
-		$lcoid = strtoupper($lunid);
-		$lname = strtoupper($lname);
-		$lunit = strtoupper($lunit);
-		foreach ($data['headline'] as $head) {
-			if($head===$lcoid) {
-				$icoid = $count;
-			}
-			if($head===$lname) {
-				$iname = $count;
-			}
-			if($head===$lunit) {
-				$iunit = $count;
-			}
-			$count++;
-		}
-		// make sure info headers found!
-		if ($icoid<0||$iname<0||$iunit<0) {
-			$this->throw_debug('Cannot find info to create course!');
-		}
-		// find course in database
-		if ($this->checkCourses()==false) {
-			$this->throw_debug('Cannot create table for courses!');
-		}
-		// do your thingy!
-		foreach ($data['dataline'] as $line) {
-			$code = trim($line[$icoid]);
-			$name = trim($line[$iname]);
-			$unit = intval($line[$iunit]);
-			$info = $this->findCourse($code);
-			if ($info['stat']==false) {
-				$this->createCourse($code,$name,$unit);
-				$info = $this->findCourse($code);
-				if ($info['stat']==false) {
-					$this->throw_debug('Something is WRONG!');
-				}
-			}
-			// create course component?
-			$count = 0; $cdata = array();
-			foreach ($data['headline'] as $head) {
-				if ($iunid!=$count&&$inrid!=$count&&$iname!=$count||
-						array_search($head,$this->_doskip)==false) {
-					// create component
-					if ($line[$count]!="") {
-						$item['col'] = $head;
-						$item['val'] = floatval($line[$count]);
-						array_push($cdata,$item);
-					}
-				}
-				$count++;
-			}
-		}
-	}
-	function importCSV_CourseMark($fname,$lunid,$lnrid,$lname) {
-		require_once dirname(__FILE__).'/FileText.php';
-		$file = new FileText();
-		$data = $file->loadCSV($fname);
-		if ($data['error']===true) {
-			$this->throw_debug('Cannot load student list!');
-		} else if ($data['rows']==0) {
-			$this->throw_debug('No student in list!');
-		}
-		// first column headline should be course id (@course code)!
-		$name = strtoupper($data['headline'][0]);
-		$name = explode(' - ',$name);
-		$code = trim(array_shift($name));
-		$name = trim(array_shift($name));
-		// find course in database
-		$this->checkCourses();
-		$info = $this->findCourse($code);
-		if ($info['stat']==false) {
-			// create course with zero unit - modify later!
-			$this->createCourse($code,$name,0);
-			$info = $this->findCourse($code);
-			if ($info['stat']==false) {
-				$this->throw_debug('Something is WRONG!');
-			}
-		}
-		// check loaded student list
-		$iunid = -1; $inrid = -1; $iname = -1; $count = 0;
-		$lunid = strtoupper($lunid);
-		$lnrid = strtoupper($lnrid);
-		$lname = strtoupper($lname);
-		foreach ($data['headline'] as $head) {
-			if($head===$lunid) {
-				$iunid = $count;
-			}
-			if($head===$lnrid) {
-				$inrid = $count;
-			}
-			if($head===$lname) {
-				$iname = $count;
-			}
-			$count++;
-		}
-		if ($iunid<0||$iname<0) {
-			$this->throw_debug('Cannot find label for student id/name!');
-		}
-		// check students tables in database
-		$this->checkStudents();
-		$this->checkCoursesStudents();
-		// browse each student?
-		foreach ($data['dataline'] as $line) {
-			$line[$iunid] = trim($line[$iunid]);
-			$line[$iname] = trim($line[$iname]);
-			$stud = $this->findStudent($line[$iunid]);
-			if ($stud['stat']==false) {
-				if ($inrid<0) {
-					$this->throw_debug('Not enough info to create student!');
-				}
-				$line[$inrid] = trim($line[$inrid]);
-				$this->createStudent($line[$iunid],$line[$iname],$line[$inrid]);
-				$stud = $this->findStudent($line[$iunid]);
-				if ($stud['stat']==false) {
-					$this->throw_debug('Something is WRONG!');
-				}
-			}
-			$cost = $this->findCourseStudent($info['id'],$stud['id']);
-			if ($cost['stat']==false) {
-				$this->createCourseStudent($info['id'],$stud['id']);
-				$cost = $this->findCourseStudent($info['id'],$stud['id']);
-				if ($cost['stat']==false) {
-					$this->throw_debug('Something is WRONG!');
-				}
-			}
-		}
-		// try to check valid course components
-		$this->checkCoursesComponents();
-		$list = array();
-		$temp = array();
-		$count = 0;
-		foreach ($data['headline'] as $head) {
-			$head = strtolower($head);
-			if ($count>0&&$head!=""&&
-					$iunid!=$count&&$inrid!=$count&&$iname!=$count&&
-					array_search($head,$this->_doskip)==false) {
-				$comp = $this->findCourseComponents($info['id'],$head);
-				if ($comp['stat']==false) {
-					$this->createCourseComponent($info['id'],$head,0.0,0.0,0);
-					$comp = $this->findCourseComponents($info['id'],$head);
-					if ($comp['stat']==false) {
-						$this->throw_debug('Something is WRONG!');
-					}
-				}
-				$item = array_shift($comp['data']);
-				$item['idx'] = $count;
-				array_push($list,$item);
-			}
-			else if ($head=='prog'||$head=='lgrp'||$head=='flag') {
-				$item['col'] = $head;
-				$item['idx'] = $count;
-				array_push($temp,$item);
-			}
-			$count++;
-		}
-		// try to import all data
-		$tname = $code.'_'.$this->_sessem;
-		$this->checkCourseMarkTable($tname,$info['id']);
-		// import in all data?
-		foreach ($data['dataline'] as $line) {
-			$rdat = array();
-			array_push($rdat,
-				array("col"=>"stid","val"=>$line[$iunid]),
-				array("col"=>"name","val"=>$line[$iname]));
-			foreach ($list as $item) {
-				array_push($rdat,
-					array("col"=>$item['name'],"val"=>$line[$item['idx']]));
-			}
-			foreach ($temp as $item) {
-				array_push($rdat,
-					array("sys"=>$item['col'],"val"=>$line[$item['idx']]));
-			}
-			$this->updateCourseMarkTable($tname,$rdat);
-		}
-		// cleanup?
-		$file = null;
 	}
 }
 ?>

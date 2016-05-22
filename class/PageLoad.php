@@ -110,9 +110,12 @@ class PageLoad extends PageDone {
 						strtoupper($csvd['headline'][3])!=HEADER_CCOMP_GROUP||
 						strtoupper($csvd['headline'][4])!=HEADER_CCOMP_SUBGRP)
 				{
-					$this->throw_debug('Invalid format?!'.json_encode($csvd));
+					$this->throw_debug('Invalid format?!');
 				}
-				$staf = $this->_dodata->findStaff($_POST[""]);
+				if (!isset($_POST["pickSem"])||!isset($_POST["pickCourse"])) {
+					$this->throw_debug('Incomplete post?!');
+				}
+				$staf = $this->_dodata->findStaff($_POST["staffId"]);
 				$cors = $this->_dodata->findCourse($_POST["pickCourse"]);
 				if ($cors['stat']==false) {
 					$this->throw_debug('Course not found!');
@@ -138,6 +141,61 @@ class PageLoad extends PageDone {
 					$sub = intval($line[4]);
 					$this->_dodata->createCourseComponent($cors['id'],
 						$name,$raw,$pct,$grp,$sub);
+				}
+				break;
+			case TASK_STAFF_ADD_STUDENTS:
+				if ($csvd['cols']<4||$csvd['cols']>6||
+						strtoupper($csvd['headline'][0])!=HEADER_STUDENT_UNID||
+						strtoupper($csvd['headline'][1])!=HEADER_STUDENT_NAME||
+						strtoupper($csvd['headline'][2])!=HEADER_STUDENT_NRIC||
+						strtoupper($csvd['headline'][3])!=HEADER_STUDENT_PROG)
+				{
+					$this->throw_debug('Invalid format?!');
+				}
+				if (!isset($_POST["pickSem"])||!isset($_POST["pickCourse"])) {
+					$this->throw_debug('Incomplete post?!');
+				}
+				$ssem = strtoupper($_POST["pickSem"]);
+				$code = strtoupper($_POST["pickCourse"]);
+				$cors = $this->_dodata->findCourse($code);
+				$table = $code.'_'.$ssem;
+				$this->_dodata->checkStudents();
+				$this->_dodata->selectSession($_POST["pickSem"]);
+				$this->_dodata->checkCourseStudent($table,$cors['id']);
+				foreach ($csvd['dataline'] as $line) {
+					if (empty($line[0])||empty($line[1])||
+							empty($line[2])||empty($line[3])) {
+						$this->throw_debug('Empty fields!');
+					}
+					$unid = strtoupper(trim($line[0]));
+					$name = strtoupper(trim($line[1]));
+					$nrid = strtoupper(trim($line[2]));
+					$prog = strtoupper(trim($line[3]));
+					$lgrp = ""; $mgrp = "";
+					if ($csvd['cols']>4&&!empty($line[4])&&
+							strtoupper($csvd['headline'][4])!=
+							HEADER_STUDENT_LGRP) {
+						$lgrp = strtoupper(trim($line[4]));
+					}
+					if ($csvd['cols']>5&&!empty($line[5])&&
+							strtoupper($csvd['headline'][5])!=
+							HEADER_STUDENT_MGRP) {
+						$mgrp = strtoupper(trim($line[5]));
+					}
+					$stud = $this->_dodata->findStudent($unid);
+					if ($stud['stat']==true) {
+						if ($stud['name']!=$name||$stud['nrid']!=$nrid) {
+							$this->throw_debug('Mistaken identity!');
+						}
+					} else {
+						$this->_dodata->createStudent($unid,$name,$nrid,$prog);
+						$stud = $this->_dodata->findStudent($unid);
+						if ($stud['stat']==false) {
+							$this->throw_debug('Something is WRONG!');
+						}
+					}
+					$this->_dodata->createCourseStudent($table,
+						$stud['id'],$lgrp,$mgrp);
 				}
 				break;
 			default:
