@@ -3,14 +3,20 @@ require_once dirname(__FILE__).'/../config/config.php';
 require_once dirname(__FILE__).'/HTMLDocument.php';
 define('PAGE_TITLE_DEFAULT','');
 class Page extends HTMLDocument {
-	protected $_dosubs;
-	protected $_doflag;
+	protected $_title_;
 	function __construct($title=PAGE_TITLE_DEFAULT,$reset=false) {
 		parent::__construct(MY1APP_TITLE,$reset);
 		if ($title!=PAGE_TITLE_DEFAULT) $title = ' - '.$title;
 		$this->_title_ = $title;
-		// flag variable for general use
-		$this->_doflag = null;
+	}
+	function insert_para($text) {
+		$temp = new HTMLObject('p');
+		$temp->insert_inner("$text");
+		$temp->do_1skipline();
+		$this->append_2body($temp);
+	}
+	function insert_link($link,$label) {
+		$this->insert_para("<a href=\"".$link."\">".$label."</a>");
 	}
 	function js_main() {
 		return null;
@@ -18,12 +24,10 @@ class Page extends HTMLDocument {
 	function build_page() {
 		$test = $this->js_main();
 		if ($test!=null) {
-			// create main script
 			$temp = new JSObject('js_main');
 			$temp->insert_inner($test);
 			$this->append_2body($temp);
 		}
-		// create page title
 		$temp = new HTMLObject('h1');
 		$temp->insert_inner(MY1APP_TITLE.$this->_title_);
 		$temp->do_1skipline();

@@ -8,7 +8,7 @@ class PageStaff extends PageBase {
 		$user = $this->_dodata->getProfile();
 		$staf = $this->_dodata->listStaff();
 		if ($staf['stat']==false) {
-			throw new Exception('Something is WRONG!');
+			$this->throw_debug('Something is WRONG!');
 		}
 		// also use parent build
 		parent::build_page();
@@ -78,7 +78,7 @@ class PageStaff extends PageBase {
 	function sendCSV() {
 		$staf = $this->_dodata->listStaff();
 		if ($staf['stat']==false) {
-			throw new Exception('Something is WRONG!');
+			$this->throw_debug('Something is WRONG!');
 		}
 		$head =  [ HEADER_STAFF_UNID,
 			HEADER_STAFF_NRIC, HEADER_STAFF_NAME ];

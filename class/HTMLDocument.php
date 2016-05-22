@@ -35,6 +35,9 @@ class HTMLObject {
 			$this->_dobr = $this->_dobr."<br>";
 		}
 	}
+	function remove_linebr() {
+		$this->_dobr = "";
+	}
 	function insert_id($id) {
 		$this->_init = substr($this->_init,0,strrpos($this->_init,">")).
 			" id=\"".$id."\">";
@@ -210,6 +213,32 @@ class HTMLForm extends HTMLObject {
 		$temp->remove_tail();
 		$temp->do_1skipline();
 		$this->append_object($temp);
+	}
+	function create_select($label,$name,$doid=null,$opts=null) {
+		// create label
+		$temp = new HTMLObject('label');
+		$temp->insert_inner($label);
+		$temp->insert_linebr();
+		$temp->do_1skipline();
+		$this->append_object($temp);
+		// create select
+		$temp = new HTMLObject('select');
+		$temp->insert_keyvalue('name',$name);
+		if ($doid!=null) {
+			$temp->insert_keyvalue('id',$doid);
+		}
+		$temp->insert_linebr(2);
+		$temp->do_multiline();
+		$this->append_object($temp);
+		// create options if requested
+		foreach ($opts as $item) {
+			$what = new HTMLObject('option');
+			$what->insert_keyvalue('value',$item[1],$item[2]);
+			$what->insert_inner($item[0]);
+			$what->do_1skipline();
+			$temp->append_object($what);
+		}
+		return $temp;
 	}
 	function create_submit($label,$name) {
 		// create submit button

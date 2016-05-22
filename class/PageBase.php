@@ -18,7 +18,7 @@ class PageBase extends Page {
 		$data = new $type();
 		$pass = $data->validateUser($_SESSION['username'],
 			$_SESSION['userpass']);
-		if ($pass===false) {
+		if ($pass!==true) {
 			session_destroy();
 			$this->throw_debug('Invalid login!');
 		}

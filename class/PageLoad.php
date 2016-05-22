@@ -38,7 +38,7 @@ class PageLoad extends PageDone {
 		require_once dirname(__FILE__).'/FileText.php';
 		$file = new FileText();
 		$csvd = $file->loadCSV($filename);
-		if ($csvd['error']===true) {
+		if ($csvd['stat']!==true) {
 			$this->throw_debug('Cannot load data!');
 		} else if ($csvd['rows']==0) {
 			$this->throw_debug('No data found!');
@@ -56,13 +56,12 @@ class PageLoad extends PageDone {
 				}
 				$this->_dodata->checkStaff();
 				foreach ($csvd['dataline'] as $line) {
-					// fixed index
+					if (empty($line[0])||empty($line[1])||empty($line[2])) {
+						$this->throw_debug('Empty fields!');
+					}
 					$unid = strtoupper(trim($line[0]));
 					$nrid = strtoupper(trim($line[1]));
 					$name = strtoupper(trim($line[2]));
-					if (empty($unid)||empty($nrid)||empty($name)) {
-						$this->throw_debug('Empty fields!');
-					}
 					$staf = $this->_dodata->findStaff($unid);
 					if ($staf['stat']==false) {
 						$this->_dodata->createStaff($unid,$name,$nrid);
@@ -85,13 +84,12 @@ class PageLoad extends PageDone {
 				}
 				$this->_dodata->checkCourses();
 				foreach ($csvd['dataline'] as $line) {
-					// fixed index
+					if (empty($line[0])||empty($line[1])||empty($line[2])) {
+						$this->throw_debug('Empty fields!');
+					}
 					$code = strtoupper(trim($line[0]));
 					$name = strtoupper(trim($line[1]));
 					$unit = strtoupper(trim($line[2]));
-					if (empty($code)||empty($name)||empty($unit)) {
-						$this->throw_debug('Empty fields!');
-					}
 					$cors = $this->_dodata->findCourse($code);
 					if ($cors['stat']==false) {
 						$this->_dodata->createCourse($code,$name,$unit);
@@ -102,6 +100,44 @@ class PageLoad extends PageDone {
 					} else {
 						$this->throw_debug('Course already in list!');
 					}
+				}
+				break;
+			case TASK_STAFF_EXECUTE_COURSE:
+				if ($csvd['cols']!=5||
+						strtoupper($csvd['headline'][0])!=HEADER_CCOMP_NAME||
+						strtoupper($csvd['headline'][1])!=HEADER_CCOMP_RAW_||
+						strtoupper($csvd['headline'][2])!=HEADER_CCOMP_PCT_||
+						strtoupper($csvd['headline'][3])!=HEADER_CCOMP_GROUP||
+						strtoupper($csvd['headline'][4])!=HEADER_CCOMP_SUBGRP)
+				{
+					$this->throw_debug('Invalid format?!'.json_encode($csvd));
+				}
+				$staf = $this->_dodata->findStaff($_POST[""]);
+				$cors = $this->_dodata->findCourse($_POST["pickCourse"]);
+				if ($cors['stat']==false) {
+					$this->throw_debug('Course not found!');
+				}
+				$this->_dodata->selectSession($_POST["pickSem"]);
+				// check if already implemented?
+				$list = $this->_dodata->listCourseStaff(null,
+					$_POST["pickCourse"]);
+				if ($list['stat']==true) {
+					$this->throw_debug('Already implemented?!');
+				}
+				$this->_dodata->createCourseStaff($cors['id'],$user['id']);
+				$this->_dodata->checkCoursesComponents();
+				foreach ($csvd['dataline'] as $line) {
+					if (empty($line[0])||empty($line[1])||empty($line[2])
+							||empty($line[3])||empty($line[4])) {
+						$this->throw_debug('Empty fields!');
+					}
+					$name = strtoupper(trim($line[0]));
+					$raw = floatval($line[1]);
+					$pct = floatval($line[2]);
+					$grp = intval($line[3]);
+					$sub = intval($line[4]);
+					$this->_dodata->createCourseComponent($cors['id'],
+						$name,$raw,$pct,$grp,$sub);
 				}
 				break;
 			default:

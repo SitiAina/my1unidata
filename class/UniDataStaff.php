@@ -5,12 +5,12 @@ class UniDataStaff extends UniData {
 	function __construct($dbfile=UNIDATA_FILE) {
 		parent::__construct($dbfile);
 		$this->_usrtab = 'staffs';
-		$this->_alevel = null;
+		$this->_alevel = 0;
 	}
 	function validateUser($username, $userpass) {
 		$item = parent::validateUser($username, $userpass);
 		if ($item==false) return false;
-		$this->_alevel = intval($item['alvl']);
+		$this->_alevel = intval($this->_dofull['alvl']);
 		return true;
 	}
 	function getProfile() {
@@ -142,6 +142,87 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('modifyCourse execute error!');
 		}
 	}
+	function checkCoursesStaffs() {
+		$table = "courses_staffs";
+		if (!$this->table_exists($table)) {
+			$tdata = array();
+			array_push($tdata,
+				array("name"=>"id","type"=>"INTEGER PRIMARY KEY"),
+				array("name"=>"ssem","type"=>"INTEGER"),
+				array("name"=>"coid","type"=>"INTEGER"),
+				array("name"=>"stid","type"=>"INTEGER"),
+				array("name"=>"flag","type"=>"INTEGER")
+			);
+			$tmore = array();
+			array_push($tmore,"UNIQUE (ssem,coid,stid)",
+				"FOREIGN KEY(coid) REFERENCES courses(id)",
+				"FOREIGN KEY(stid) REFERENCES staffs(id)");
+			$this->table_create($table,$tdata,$tmore);
+		}
+		$this->checkCourses();
+		$this->checkStaffs();
+		$view = "courses_staffs_view";
+		if (!$this->view_exists($view)) {
+			$data = array();
+			array_push($data,
+				array("which"=>"T1.ssem","alias"=>"ssem"),
+				array("which"=>"T2.code","alias"=>"course"),
+				array("which"=>"T3.name","alias"=>"name"),
+				array("which"=>"T3.unid","alias"=>"staff")
+			);
+			$more = array();
+			array_push($more," FROM courses_staffs T1, courses T2, ",
+				"staffs T3 WHERE T1.coid=T2.id AND T1.stid=T3.id");
+			$this->view_create($view,$data,$more);
+		}
+	}
+	function createCourseStaff($coid,$stid) {
+		$ssem = intval($this->_sessem);
+		$coid = intval($coid);
+		$stid = intval($stid);
+		$prep = "INSERT INTO courses_staffs (ssem,coid,stid,flag) ".
+			"VALUES (:ssem,:coid,:stid,1)";
+		$stmt = $this->prepare($prep);
+		$stmt->bindValue(':ssem',$ssem,PDO::PARAM_INT);
+		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
+		$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
+		$temp = $stmt->execute();
+		$stmt->closeCursor();
+		if ($temp==false) {
+			$this->throw_debug('createCourseStaff Failed');
+		}
+	}
+	function listCourseStaff($user=null,$code=null) {
+		if ($user!=null) $user = strtoupper($user);
+		else if ($code!=null) $code = strtoupper($code);
+		$result = [];
+		$prep = "SELECT * FROM  courses_staffs_view";
+		if ($user!=null) $prep = $prep." WHERE staff=?";
+		else if ($code!=null) $prep = $prep." WHERE course=?";
+		$prep = $prep." ORDER BY ssem DESC, COURSE ASC";
+		$stmt = $this->prepare($prep);
+		if ($user!=null) {
+			if (!$stmt->bindValue(1,$user,PDO::PARAM_STR)) {
+				$this->throw_debug('listCourseStaff bind error!');
+			}
+		}
+		else if ($code!=null) {
+			if (!$stmt->bindValue(1,$code,PDO::PARAM_STR)) {
+				$this->throw_debug('listCourseStaff bind error!');
+			}
+		}
+		if (!$stmt->execute()) {
+			$this->throw_debug('listCourseStaff execute error!');
+		}
+		$item = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		if ($item!=false) {
+			$result['list'] = $item;
+			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
+		}
+		return $result;
+	}
 	function createCourseComponent($coid,$name,$raw,$pct,$grp,$sub) {
 		if ($this->_sessem==null) {
 			$this->throw_debug('Session/Semester NOT selected!');
@@ -208,7 +289,7 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('modifyCourseComponent execute error!');
 		}
 	}
-	function checkCourseComponents($coid) {
+	function validateCourseComponents($coid) {
 		if ($this->_sessem==null) {
 			$this->throw_debug('Session/Semester NOT selected!');
 		}

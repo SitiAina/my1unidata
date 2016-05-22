@@ -19,7 +19,7 @@ JSMAIN;
 		$user = $this->_dodata->getProfile();
 		$item = $this->_dodata->findCourse($this->_code);
 		if ($item['stat']==false) {
-			throw new Exception('Something is WRONG!');
+			$this->throw_debug('Something is WRONG!');
 		}
 		// also use parent build
 		parent::build_page();

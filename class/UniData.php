@@ -6,6 +6,7 @@ class UniData extends Base {
 	protected $_usrtab;
 	protected $_dounid;
 	protected $_doname;
+	protected $_dofull; // validate results - temp?
 	protected $_sessem; // session semester YYYYNNNNS format
 	protected $_doskip; // skip column with these names
 	function __construct($dbfile=UNIDATA_FILE) {
@@ -14,6 +15,7 @@ class UniData extends Base {
 		$this->_usrtab = 'students';
 		$this->_dounid = null;
 		$this->_doname = null;
+		$this->_dofull = null;
 		$this->_sessem = null;
 		$this->_doskip = [ 'stid','matrik','nama','name','id','prog',
 			'lgrp','flag','grp','lab' ];
@@ -25,7 +27,7 @@ class UniData extends Base {
 		if ($year2!=($year1+1)||$dosem>3||$dosem<1) {
 			$this->throw_debug('Invalid Session/Semester selection!');
 		}
-		$this->_sessem = intval($sessem); // should i check for format?
+		$this->_sessem = intval($sessem);
 	}
 	function validateUser($username, $userpass) {
 		// hashing done by clients
@@ -43,11 +45,12 @@ class UniData extends Base {
 		$this->_userid = intval($item['id']); // make sure an integer?
 		$this->_dounid = $item['unid'];
 		$this->_doname = $item['name'];
+		$this->_dofull = $item;
 		return true;
 	}
 	function getProfile() {
-		return [ "unid" => $this->_dounid, "name" => $this->_doname,
-			"staf" => false ];
+		return [ "id" => $this->_userid, "unid" => $this->_dounid,
+			 "name" => $this->_doname, "staf" => false ];
 	}
 	function modifyPass($username, $pass_old, $pass_new) {
 		if ($this->_dounid==null) {

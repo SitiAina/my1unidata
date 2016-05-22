@@ -80,9 +80,9 @@ class FileText {
 			fclose($pfile);
 			$result['cols'] = $count;
 			$result['rows'] = $index-$start;
-			$result['stat'] = false;
-		} else {
 			$result['stat'] = true;
+		} else {
+			$result['stat'] = false;
 		}
 		if ($do_ext==false) {
 			$this->content = $result;

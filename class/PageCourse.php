@@ -8,7 +8,7 @@ class PageCourse extends PageBase {
 		$user = $this->_dodata->getProfile();
 		$cors = $this->_dodata->listCourse();
 		if ($cors['stat']==false) {
-			throw new Exception('Something is WRONG!');
+			$this->throw_debug('Something is WRONG!');
 		}
 		// also use parent build
 		parent::build_page();
@@ -39,9 +39,12 @@ class PageCourse extends PageBase {
 				$_row->do_1skipline();
 				$_tab->append_object($_row);
 				$_col = new HTMLObject('td');
-				$_col->insert_inner($item['code'].
-					'&nbsp;&nbsp;[<a href="work.php?do=editcourse&'.
-					'code='.$item['code'].'">Modify</a>]');
+				$temp = $item['code'];
+				if ($user['alvl']>0) {
+					$temp = $temp.'&nbsp;&nbsp;[<a href="work.php?'.
+					'do=editcourse&code='.$item['code'].'">Modify</a>]';
+				}
+				$_col->insert_inner($temp);
 				$_row->append_object($_col);
 				$_col = new HTMLObject('td');
 				$_col->insert_inner($item['name']);
@@ -72,7 +75,7 @@ class PageCourse extends PageBase {
 	function sendCSV() {
 		$cors = $this->_dodata->listCourse();
 		if ($cors['stat']==false) {
-			throw new Exception('Something is WRONG!');
+			$this->throw_debug('Something is WRONG!');
 		}
 		$head =  [ HEADER_COURSE_CODE,
 			HEADER_COURSE_NAME, HEADER_COURSE_UNIT ];
