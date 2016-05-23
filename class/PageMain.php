@@ -71,10 +71,10 @@ JSMAIN;
 				[ 'Add Students', TASK_STAFF_ADD_STUDENTS,true ]
 			];
 			if ($user['alvl']>0) {
-				array_unshift($ops,['Create Staff',
-					TASK_STAFF_CREATE_STAFF,true]);
-				array_unshift($ops,['Create Course',
+				array_unshift($opts,['Create Course',
 					TASK_STAFF_CREATE_COURSE,true]);
+				array_unshift($opts,['Create Staff',
+					TASK_STAFF_CREATE_STAFF,true]);
 			}
 			$temp = $form->create_select('Select Command',
 				'aCommand','acommand',$opts);
