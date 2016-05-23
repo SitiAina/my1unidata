@@ -10,7 +10,7 @@ try {
 	$nrid = "010101000101"; /* ultimate nrid? */
 	require_once dirname(__FILE__).'/class/UniDataStaff.php';
 	$test = new UniDataStaff();
-	$test->checkStaff();
+	$test->checkStaffs();
 	$init = $test->findStaff($unid);
 	if ($init['stat']===false) {
 		$test->createStaff($unid,$name,$nrid,1);
