@@ -54,7 +54,7 @@ class PageLoad extends PageDone {
 				{
 					$this->throw_debug('Invalid format?!');
 				}
-				$this->_dodata->checkStaff();
+				$this->_dodata->checkStaffs();
 				foreach ($csvd['dataline'] as $line) {
 					if (empty($line[0])||empty($line[1])||empty($line[2])) {
 						$this->throw_debug('Empty fields!');
