@@ -47,12 +47,18 @@ JSMAIN;
 			$form->create_input('Select Data File (CSV)','file','dataFile');
 		}
 		// selection for semester
-		$opts = [
-			[ 'Academic Session 2015/2016 Semester 2', '201520162', true ],
-			[ 'Academic Session 2015/2016 Semester 1', '201520161', true ],
-			[ 'Academic Session 2014/2015 Semester 2', '201420152', true ],
-			[ 'Academic Session 2014/2015 Semester 1', '201420151', true ]
-		];
+		$opts = array();
+		date_default_timezone_set('UTC');
+		$temp = explode(':',date("Y:m"));
+		$year = intval(array_shift($temp));
+		$mmon = intval(array_shift($temp)); // can be used to select default??
+		for ($loop=0;$loop<2;$loop++) {
+			$temp = 'Academic Session '.$year.'/'.($year+1).' Semester 2';
+			array_push($opts,[$temp,$year.''.($year+1).'2',true]);
+			$temp = 'Academic Session '.$year.'/'.($year+1).' Semester 1';
+			array_push($opts,[$temp,$year.''.($year+1).'1',true]);
+			$year--;
+		}
 		$temp = $form->create_select('Academic Session / Semester',
 			'pickSem','picksem',$opts);
 		// selection for course
@@ -82,10 +88,14 @@ JSMAIN;
 			$form->create_submit('Process Command','process');
 			// extra command links
 			if ($user['alvl']>0) {
+				$show = ' ['.HEADER_STAFF_UNID.','.
+					HEADER_STAFF_NRIC.','.HEADER_STAFF_NAME.']';
 				$this->insert_link("work.php?do=viewstaff",
-					'View Staff List');
+					'View Staff List'.$show);
+				$show = ' ['.HEADER_COURSE_CODE.','.
+					HEADER_COURSE_NAME.','.HEADER_COURSE_UNIT.']';
 				$this->insert_link("work.php?do=viewcourse",
-					'View Course List');
+					'View Course List'.$show);
 			}
 		} else {
 		}

@@ -1,6 +1,4 @@
 <?php
-if (!defined('CONFIG_DONE')) {
-define('CONFIG_DONE', true);
 define('DEBUG_MODE', true);
 define('MY1APP_TITLE','MY1 UniData');
 define('MY1STAFF_LOGIN',4);
@@ -27,5 +25,4 @@ define('HEADER_STUDENT_NRIC','NRIC');
 define('HEADER_STUDENT_PROG','PROGRAM');
 define('HEADER_STUDENT_LGRP','LGROUP');
 define('HEADER_STUDENT_MGRP','MGROUP');
-}
 ?>
