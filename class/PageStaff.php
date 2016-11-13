@@ -38,8 +38,6 @@ class PageStaff extends PageBase {
 			$_col->insert_inner('<b>FLAG</b>');
 			$_row->append_object($_col);
 			foreach ($staf['list'] as $item) {
-				if ($item['unid']=='0100000')
-					continue;
 				$_row = new HTMLObject('tr');
 				$_row->do_1skipline();
 				$_tab->append_object($_row);
@@ -84,8 +82,6 @@ class PageStaff extends PageBase {
 			HEADER_STAFF_NRIC, HEADER_STAFF_NAME ];
 		$data = [];
 		foreach ($staf['list'] as $item) {
-			if ($item['unid']=='0100000')
-				continue;
 			array_push($data,[$item['unid'],$item['nrid'],$item['name']]);
 		}
 		require_once dirname(__FILE__).'/FileText.php';

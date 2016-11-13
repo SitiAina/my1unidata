@@ -97,6 +97,10 @@ JSMAIN;
 				$this->insert_link("work.php?do=viewcourse",
 					'View Course List'.$show);
 			}
+			$show = ' ['.HEADER_CCOMP_NAME.','.HEADER_CCOMP_RAW_.','.
+				HEADER_CCOMP_PCT_.','.HEADER_CCOMP_GROUP.','.
+				HEADER_CCOMP_SUBGRP.']';
+			$this->insert_para('View Course Components '.$show);
 		} else {
 		}
 	}

@@ -127,6 +127,7 @@ class PageLoad extends PageDone {
 				if ($list['stat']==true) {
 					$this->throw_debug('Already implemented?!');
 				}
+				$this->_dodata->checkStudents();
 				$this->_dodata->createCourseStaff($cors['id'],$user['id']);
 				$this->_dodata->checkCoursesComponents();
 				foreach ($csvd['dataline'] as $line) {

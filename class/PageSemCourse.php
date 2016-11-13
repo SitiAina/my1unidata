@@ -74,6 +74,8 @@ class PageSemCourse extends PageBase {
 		}
 		// create command links
 		$this->insert_link('javascript:history.back()','Back');
+		// checkif student db avaialable
+		$this->_dodata->checkStudents();
 		// list students as well
 		$table = $this->_code.'_'.$this->_ssem;
 		$this->_dodata->checkCourseStudent($table,$core['id']);
