@@ -224,23 +224,25 @@ class UniDataStaff extends UniData {
 		}
 		return $result;
 	}
-	function createCourseComponent($coid,$name,$raw,$pct,$grp,$sub) {
+	function createCourseComponent($coid,$name,$raw,$pct,$lab,$grp,$sub) {
 		if ($this->_sessem==null) {
 			$this->throw_debug('Session/Semester NOT selected!');
 		}
 		$coid = intval($coid);
 		$name = strtoupper($name);
+		$lab = strtoupper($lab);
 		$grp = intval($grp);
 		$sub = intval($sub);
 		$raw = floatval($raw);
 		$pct = floatval($pct);
 		$prep = "INSERT INTO courses_components ";
-		$prep = $prep."(ssem,coid,name,raw,pct,grp,sub,flag) ";
-		$prep = $prep."VALUES (:ssem,:coid,:name,:raw,:pct,:grp,:sub,1)";
+		$prep = $prep."(ssem,coid,name,lab,raw,pct,grp,sub,flag) ";
+		$prep = $prep."VALUES (:ssem,:coid,:name,:lab,:raw,:pct,:grp,:sub,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
 		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
 		$stmt->bindValue(':name',$name,PDO::PARAM_STR);
+		$stmt->bindValue(':lab',$lab,PDO::PARAM_STR);
 		$stmt->bindValue(':raw',$raw,PDO::PARAM_STR); // no PARAM_REAL!
 		$stmt->bindValue(':pct',$pct,PDO::PARAM_STR);
 		$stmt->bindValue(':grp',$grp,PDO::PARAM_INT);

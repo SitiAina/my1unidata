@@ -7,9 +7,6 @@ class PageCourse extends PageBase {
 	function build_page() {
 		$user = $this->_dodata->getProfile();
 		$cors = $this->_dodata->listCourse();
-		if ($cors['stat']==false) {
-			$this->throw_debug('Something is WRONG!');
-		}
 		// also use parent build
 		parent::build_page();
 		$size = count($cors['list']);
@@ -74,9 +71,6 @@ class PageCourse extends PageBase {
 	}
 	function sendCSV() {
 		$cors = $this->_dodata->listCourse();
-		if ($cors['stat']==false) {
-			$this->throw_debug('Something is WRONG!');
-		}
 		$head =  [ HEADER_COURSE_CODE,
 			HEADER_COURSE_NAME, HEADER_COURSE_UNIT ];
 		$data = [];

@@ -98,9 +98,9 @@ JSMAIN;
 					'View Course List'.$show);
 			}
 			$show = ' ['.HEADER_CCOMP_NAME.','.HEADER_CCOMP_RAW_.','.
-				HEADER_CCOMP_PCT_.','.HEADER_CCOMP_GROUP.','.
-				HEADER_CCOMP_SUBGRP.']';
-			$this->insert_para('View Course Components '.$show);
+				HEADER_CCOMP_PCT_.','.HEADER_CCOMP_LABEL.','.
+				HEADER_CCOMP_GROUP.','.HEADER_CCOMP_SUBGRP.']';
+			$this->insert_para('Course Components Headers: '.$show);
 		} else {
 		}
 	}

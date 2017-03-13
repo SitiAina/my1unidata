@@ -166,6 +166,7 @@ class UniData extends Base {
 				array("name"=>"ssem","type"=>"INTEGER"),
 				array("name"=>"coid","type"=>"INTEGER"),
 				array("name"=>"name","type"=>"TEXT"),
+				array("name"=>"lbl","type"=>"TEXT"),
 				array("name"=>"raw","type"=>"REAL"),
 				array("name"=>"pct","type"=>"REAL"),
 				array("name"=>"grp","type"=>"INTEGER"),

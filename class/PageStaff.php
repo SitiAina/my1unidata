@@ -7,13 +7,10 @@ class PageStaff extends PageBase {
 	function build_page() {
 		$user = $this->_dodata->getProfile();
 		$staf = $this->_dodata->listStaff();
-		if ($staf['stat']==false) {
-			$this->throw_debug('Something is WRONG!');
-		}
 		// also use parent build
 		parent::build_page();
 		$size = count($staf['list']);
-		if ($size>1) {
+		if ($size>0) {
 			// create table
 			$_tab = new HTMLObject('table');
 			$_tab->insert_keyvalue('border','2',true);
@@ -75,9 +72,6 @@ class PageStaff extends PageBase {
 	}
 	function sendCSV() {
 		$staf = $this->_dodata->listStaff();
-		if ($staf['stat']==false) {
-			$this->throw_debug('Something is WRONG!');
-		}
 		$head =  [ HEADER_STAFF_UNID,
 			HEADER_STAFF_NRIC, HEADER_STAFF_NAME ];
 		$data = [];

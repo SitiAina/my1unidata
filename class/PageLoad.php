@@ -103,12 +103,13 @@ class PageLoad extends PageDone {
 				}
 				break;
 			case TASK_STAFF_EXECUTE_COURSE:
-				if ($csvd['cols']!=5||
+				if ($csvd['cols']!=6||
 						strtoupper($csvd['headline'][0])!=HEADER_CCOMP_NAME||
 						strtoupper($csvd['headline'][1])!=HEADER_CCOMP_RAW_||
 						strtoupper($csvd['headline'][2])!=HEADER_CCOMP_PCT_||
-						strtoupper($csvd['headline'][3])!=HEADER_CCOMP_GROUP||
-						strtoupper($csvd['headline'][4])!=HEADER_CCOMP_SUBGRP)
+						strtoupper($csvd['headline'][3])!=HEADER_CCOMP_LABEL||
+						strtoupper($csvd['headline'][4])!=HEADER_CCOMP_GROUP||
+						strtoupper($csvd['headline'][5])!=HEADER_CCOMP_SUBGRP)
 				{
 					$this->throw_debug('Invalid format?!');
 				}
@@ -138,10 +139,11 @@ class PageLoad extends PageDone {
 					$name = strtoupper(trim($line[0]));
 					$raw = floatval($line[1]);
 					$pct = floatval($line[2]);
-					$grp = intval($line[3]);
-					$sub = intval($line[4]);
+					$lab = strtoupper(trim($line[3]));
+					$grp = intval($line[4]);
+					$sub = intval($line[5]);
 					$this->_dodata->createCourseComponent($cors['id'],
-						$name,$raw,$pct,$grp,$sub);
+						$name,$raw,$pct,$lab,$grp,$sub);
 				}
 				break;
 			case TASK_STAFF_ADD_STUDENTS:
