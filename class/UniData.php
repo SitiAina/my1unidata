@@ -171,6 +171,7 @@ class UniData extends Base {
 				array("name"=>"pct","type"=>"REAL"),
 				array("name"=>"grp","type"=>"INTEGER"),
 				array("name"=>"sub","type"=>"INTEGER"),
+				array("name"=>"idx","type"=>"INTEGER"),
 				array("name"=>"flag","type"=>"INTEGER")
 			);
 			$tmore = array();
@@ -179,12 +180,12 @@ class UniData extends Base {
 			$this->table_create($table,$tdata,$tmore);
 		}
 	}
-	function findCourseComponents($coid,$name=null) {
+	function findCoursesComponents($coid,$name=null) {
 		if ($this->_sessem==null) {
 			$this->throw_debug('Session/Semester NOT selected!');
 		}
 		$result = [];
-		$prep = "SELECT id, name, raw, pct, grp, sub, flag ";
+		$prep = "SELECT id, name, lbl, raw, pct, grp, sub, idx, flag ";
 		$prep = $prep."FROM courses_components ";
 		$prep = $prep."WHERE coid=? AND ssem=?";
 		if ($name!=null) {
@@ -195,15 +196,15 @@ class UniData extends Base {
 		$stmt = $this->prepare($prep);
 		if (!$stmt->bindValue(1,$coid,PDO::PARAM_INT)||
 				!$stmt->bindValue(2,$this->_sessem,PDO::PARAM_INT)) {
-			$this->throw_debug('findCourseComponent bind error!');
+			$this->throw_debug('findCoursesComponents bind error!');
 		}
 		if ($name!=null) {
 			if (!$stmt->bindValue(3,$name,PDO::PARAM_STR)) {
-				$this->throw_debug('findCourseComponent bind error!');
+				$this->throw_debug('findCoursesComponents bind error!');
 			}
 		}
 		if (!$stmt->execute()) {
-			$this->throw_debug('findCourseComponent execute error!');
+			$this->throw_debug('findCoursesComponents execute error!');
 		}
 		$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		if ($items!=false) {
@@ -226,7 +227,7 @@ class UniData extends Base {
 		return $result;
 	}
 	function checkCourseStudent($table,$coid) {
-		$check = $this->findCourseComponents($coid);
+		$check = $this->findCoursesComponents($coid);
 		if ($check['stat']==false) {
 			$this->throw_debug('checkCourseStudent find error!');
 		}

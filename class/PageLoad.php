@@ -123,7 +123,7 @@ class PageLoad extends PageDone {
 				}
 				$this->_dodata->selectSession($_POST["pickSem"]);
 				// check if already implemented?
-				$list = $this->_dodata->listCourseStaff(null,
+				$list = $this->_dodata->listCoursesStaffs(null,
 					$_POST["pickCourse"]);
 				if ($list['stat']==true) {
 					$this->throw_debug('Already implemented?!');

@@ -24,7 +24,7 @@ JSMAIN;
 		//$this->insert_para("[DEBUG] ".json_encode($user));
 		if ($user['staf']===true) {
 			$this->_dodata->checkCoursesStaffs();
-			$list = $this->_dodata->listCourseStaff($user['unid']);
+			$list = $this->_dodata->listCoursesStaffs($user['unid']);
 			if ($list['stat']===true) {
 				$this->insert_para("<br><b>Course Implementations</b>");
 				foreach ($list['list'] as $item) {
@@ -63,7 +63,7 @@ JSMAIN;
 			'pickSem','picksem',$opts);
 		// selection for course
 		$opts = [];
-		$cors = $this->_dodata->listCourse();
+		$cors = $this->_dodata->listCourses();
 		foreach ($cors['list'] as $item) {
 			array_push($opts,[$item['code']." - ".$item['name'],
 				$item['code'],false]);
@@ -101,6 +101,10 @@ JSMAIN;
 				HEADER_CCOMP_PCT_.','.HEADER_CCOMP_LABEL.','.
 				HEADER_CCOMP_GROUP.','.HEADER_CCOMP_SUBGRP.']';
 			$this->insert_para('Course Components Headers: '.$show);
+			$show = ' ['.HEADER_STUDENT_UNID.','.HEADER_STUDENT_NAME.','.
+				HEADER_STUDENT_NRIC.','.HEADER_STUDENT_PROG.','.
+				HEADER_STUDENT_LGRP.','.HEADER_STUDENT_MGRP.']';
+			$this->insert_para('Student List Headers: '.$show);
 		} else {
 		}
 	}

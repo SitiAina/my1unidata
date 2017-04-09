@@ -14,7 +14,7 @@ class PageSemCourse extends PageBase {
 		$user = $this->_dodata->getProfile();
 		$core = $this->_dodata->findCourse($this->_code);
 		$text = $this->_dodata->selectSession($this->_ssem);
-		$cors = $this->_dodata->findCourseComponents($core['id']);
+		$cors = $this->_dodata->findCoursesComponents($core['id']);
 		if ($cors['stat']==false) {
 			$this->throw_debug('Cannot find components!');
 		}
@@ -40,6 +40,9 @@ class PageSemCourse extends PageBase {
 			$_col->insert_inner('<b>'.HEADER_CCOMP_SUBGRP.'</b>');
 			$_row->append_object($_col);
 			$_col = new HTMLObject('th');
+			$_col->insert_inner('<b>'.HEADER_CCOMP_LABEL.'</b>');
+			$_row->append_object($_col);
+			$_col = new HTMLObject('th');
 			$_col->insert_inner('<b>'.HEADER_CCOMP_NAME.'</b>');
 			$_row->append_object($_col);
 			$_col = new HTMLObject('th');
@@ -57,6 +60,13 @@ class PageSemCourse extends PageBase {
 				$_row->append_object($_col);
 				$_col = new HTMLObject('td');
 				$_col->insert_inner($item['sub']);
+				$_row->append_object($_col);
+				$temp = $item['lbl'];
+				$temp = $temp.'&nbsp;&nbsp;[<a href="work.php?'.
+				'do=editccmp&ssem='.$this->_ssem.'&code='.$this->_code.
+				'&ccmp='.$item['id'].'">Modify</a>]';
+				$_col = new HTMLObject('td');
+				$_col->insert_inner($temp);
 				$_row->append_object($_col);
 				$_col = new HTMLObject('td');
 				$_col->insert_inner($item['name']);

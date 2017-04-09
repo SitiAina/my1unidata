@@ -6,7 +6,7 @@ class PageStaff extends PageBase {
 	}
 	function build_page() {
 		$user = $this->_dodata->getProfile();
-		$staf = $this->_dodata->listStaff();
+		$staf = $this->_dodata->listStaffs();
 		// also use parent build
 		parent::build_page();
 		$size = count($staf['list']);
@@ -71,7 +71,7 @@ class PageStaff extends PageBase {
 		$this->append_2body($temp);
 	}
 	function sendCSV() {
-		$staf = $this->_dodata->listStaff();
+		$staf = $this->_dodata->listStaffs();
 		$head =  [ HEADER_STAFF_UNID,
 			HEADER_STAFF_NRIC, HEADER_STAFF_NAME ];
 		$data = [];

@@ -1,4 +1,7 @@
 <?php
+// allow local config file to override
+include_once dirname(__FILE__).'/config/'.basename(__FILE__).'local';
+// the config stuffs
 define('DEBUG_MODE', true);
 define('MY1APP_TITLE','MY1 UniData');
 define('MY1STAFF_LOGIN',4);

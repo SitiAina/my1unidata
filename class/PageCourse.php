@@ -6,7 +6,7 @@ class PageCourse extends PageBase {
 	}
 	function build_page() {
 		$user = $this->_dodata->getProfile();
-		$cors = $this->_dodata->listCourse();
+		$cors = $this->_dodata->listCourses();
 		// also use parent build
 		parent::build_page();
 		$size = count($cors['list']);
@@ -70,7 +70,7 @@ class PageCourse extends PageBase {
 		$this->append_2body($temp);
 	}
 	function sendCSV() {
-		$cors = $this->_dodata->listCourse();
+		$cors = $this->_dodata->listCourses();
 		$head =  [ HEADER_COURSE_CODE,
 			HEADER_COURSE_NAME, HEADER_COURSE_UNIT ];
 		$data = [];

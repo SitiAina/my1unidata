@@ -77,7 +77,7 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('createStaff Failed');
 		}
 	}
-	function listStaff() {
+	function listStaffs() {
 		$result = [];
 		$prep = "SELECT unid, nrid, name, flag FROM ".$this->_usrtab;
 		$stmt = $this->prepare($prep);
@@ -109,7 +109,7 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('createCourse Failed');
 		}
 	}
-	function listCourse() {
+	function listCourses() {
 		$result = [];
 		$prep = "SELECT code, name, unit FROM courses ORDER BY code";
 		$stmt = $this->prepare($prep);
@@ -177,6 +177,7 @@ class UniDataStaff extends UniData {
 			$this->view_create($view,$data,$more);
 		}
 	}
+	// findCoursesStaffs not needed coz we have listCoursesStaffs?
 	function createCourseStaff($coid,$stid) {
 		$ssem = intval($this->_sessem);
 		$coid = intval($coid);
@@ -193,7 +194,7 @@ class UniDataStaff extends UniData {
 			$this->throw_debug('createCourseStaff Failed');
 		}
 	}
-	function listCourseStaff($user=null,$code=null) {
+	function listCoursesStaffs($user=null,$code=null) {
 		if ($user!=null) $user = strtoupper($user);
 		else if ($code!=null) $code = strtoupper($code);
 		$result = [];
@@ -204,16 +205,16 @@ class UniDataStaff extends UniData {
 		$stmt = $this->prepare($prep);
 		if ($user!=null) {
 			if (!$stmt->bindValue(1,$user,PDO::PARAM_STR)) {
-				$this->throw_debug('listCourseStaff bind error!');
+				$this->throw_debug('listCoursesStaffs bind error!');
 			}
 		}
 		else if ($code!=null) {
 			if (!$stmt->bindValue(1,$code,PDO::PARAM_STR)) {
-				$this->throw_debug('listCourseStaff bind error!');
+				$this->throw_debug('listCoursesStaffs bind error!');
 			}
 		}
 		if (!$stmt->execute()) {
-			$this->throw_debug('listCourseStaff execute error!');
+			$this->throw_debug('listCoursesStaffs execute error!');
 		}
 		$item = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		if ($item!=false) {
@@ -224,7 +225,7 @@ class UniDataStaff extends UniData {
 		}
 		return $result;
 	}
-	function createCourseComponent($coid,$name,$raw,$pct,$lab,$grp,$sub) {
+	function createCourseComponent($coid,$name,$raw,$pct,$lab,$grp,$sub,$idx) {
 		if ($this->_sessem==null) {
 			$this->throw_debug('Session/Semester NOT selected!');
 		}
@@ -233,11 +234,12 @@ class UniDataStaff extends UniData {
 		$lab = strtoupper($lab);
 		$grp = intval($grp);
 		$sub = intval($sub);
+		$idx = intval($idx);
 		$raw = floatval($raw);
 		$pct = floatval($pct);
 		$prep = "INSERT INTO courses_components ";
-		$prep = $prep."(ssem,coid,name,lab,raw,pct,grp,sub,flag) ";
-		$prep = $prep."VALUES (:ssem,:coid,:name,:lab,:raw,:pct,:grp,:sub,1)";
+		$prep = $prep."(ssem,coid,name,lbl,raw,pct,grp,sub,idx,flag) VALUES ";
+		$prep = $prep."(:ssem,:coid,:name,:lab,:raw,:pct,:grp,:sub,:idx,1)";
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':ssem',$this->_sessem,PDO::PARAM_INT);
 		$stmt->bindValue(':coid',$coid,PDO::PARAM_INT);
@@ -247,6 +249,7 @@ class UniDataStaff extends UniData {
 		$stmt->bindValue(':pct',$pct,PDO::PARAM_STR);
 		$stmt->bindValue(':grp',$grp,PDO::PARAM_INT);
 		$stmt->bindValue(':sub',$sub,PDO::PARAM_INT);
+		$stmt->bindValue(':idx',$idx,PDO::PARAM_INT);
 		$temp = $stmt->execute();
 		$stmt->closeCursor();
 		if ($temp==false) {
