@@ -99,7 +99,8 @@ JSMAIN;
 			}
 			$show = ' ['.HEADER_CCOMP_NAME.','.HEADER_CCOMP_RAW_.','.
 				HEADER_CCOMP_PCT_.','.HEADER_CCOMP_LABEL.','.
-				HEADER_CCOMP_GROUP.','.HEADER_CCOMP_SUBGRP.']';
+				HEADER_CCOMP_GROUP.','.HEADER_CCOMP_SUBGRP.','.
+				HEADER_CCOMP_INDEX.']';
 			$this->insert_para('Course Components Headers: '.$show);
 			$show = ' ['.HEADER_STUDENT_UNID.','.HEADER_STUDENT_NAME.','.
 				HEADER_STUDENT_NRIC.','.HEADER_STUDENT_PROG.','.

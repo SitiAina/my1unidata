@@ -301,9 +301,16 @@ class UniDataStaff extends UniData {
 		$stid = intval($stid);
 		$lgrp = strtoupper(trim($lgrp));
 		$mgrp = strtoupper(trim($mgrp));
-		$prep = "INSERT INTO ".$table;
-		$prep = $prep." (stid,lgrp,mgrp,flag)";
-		$prep = $prep." VALUES (:stid,:lgrp,:mgrp,1)";
+		$list = $this->findCourseStudent($table,$stid);
+		if ($list['stat']===true&&count($list['list'])>0) {
+			// modify!
+			$prep = "UPDATE ".$table." SET lgrp=:lgrp, mgrp=:mgrp";
+			$prep = $prep." WHERE stid=:stid";
+		} else {
+			$prep = "INSERT INTO ".$table;
+			$prep = $prep." (stid,lgrp,mgrp,flag)";
+			$prep = $prep." VALUES (:stid,:lgrp,:mgrp,1)";
+		}
 		$stmt = $this->prepare($prep);
 		$stmt->bindValue(':stid',$stid,PDO::PARAM_INT);
 		$stmt->bindValue(':lgrp',$lgrp,PDO::PARAM_STR);

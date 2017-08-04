@@ -70,7 +70,8 @@ class PageLoad extends PageDone {
 							$this->throw_debug('Something is WRONG!');
 						}
 					} else {
-						$this->throw_debug('Staff already in list!');
+						continue;
+						//$this->throw_debug('Staff already in list!');
 					}
 				}
 				break;
@@ -98,18 +99,20 @@ class PageLoad extends PageDone {
 							$this->throw_debug('Something is WRONG!');
 						}
 					} else {
-						$this->throw_debug('Course already in list!');
+						continue;
+						//$this->throw_debug('Course already in list!');
 					}
 				}
 				break;
 			case TASK_STAFF_EXECUTE_COURSE:
-				if ($csvd['cols']!=6||
+				if ($csvd['cols']!=7||
 						strtoupper($csvd['headline'][0])!=HEADER_CCOMP_NAME||
 						strtoupper($csvd['headline'][1])!=HEADER_CCOMP_RAW_||
 						strtoupper($csvd['headline'][2])!=HEADER_CCOMP_PCT_||
 						strtoupper($csvd['headline'][3])!=HEADER_CCOMP_LABEL||
 						strtoupper($csvd['headline'][4])!=HEADER_CCOMP_GROUP||
-						strtoupper($csvd['headline'][5])!=HEADER_CCOMP_SUBGRP)
+						strtoupper($csvd['headline'][5])!=HEADER_CCOMP_SUBGRP||
+						strtoupper($csvd['headline'][6])!=HEADER_CCOMP_INDEX)
 				{
 					$this->throw_debug('Invalid format?!');
 				}
@@ -121,12 +124,23 @@ class PageLoad extends PageDone {
 				if ($cors['stat']==false) {
 					$this->throw_debug('Course not found!');
 				}
-				$this->_dodata->selectSession($_POST["pickSem"]);
+				$ssem = $_POST["pickSem"];
+				$this->_dodata->selectSession($ssem);
 				// check if already implemented?
 				$list = $this->_dodata->listCoursesStaffs(null,
 					$_POST["pickCourse"]);
 				if ($list['stat']==true) {
-					$this->throw_debug('Already implemented?!');
+					// check session!
+					$temp = $list['list'];
+					$pick = null;
+					foreach($temp as $data) {
+						if ($ssem===$data['ssem']) {
+							$pick = $data['ssem'];
+							break;
+						}
+					}
+					if ($pick!==null)
+						$this->throw_debug('Already implemented?!');
 				}
 				$this->_dodata->checkStudents();
 				$this->_dodata->createCourseStaff($cors['id'],$user['id']);
@@ -147,11 +161,13 @@ class PageLoad extends PageDone {
 				}
 				break;
 			case TASK_STAFF_ADD_STUDENTS:
-				if ($csvd['cols']<4||$csvd['cols']>6||
+				if ($csvd['cols']!=6||
 						strtoupper($csvd['headline'][0])!=HEADER_STUDENT_UNID||
 						strtoupper($csvd['headline'][1])!=HEADER_STUDENT_NAME||
 						strtoupper($csvd['headline'][2])!=HEADER_STUDENT_NRIC||
-						strtoupper($csvd['headline'][3])!=HEADER_STUDENT_PROG)
+						strtoupper($csvd['headline'][3])!=HEADER_STUDENT_PROG||
+						strtoupper($csvd['headline'][4])!=HEADER_STUDENT_LGRP||
+						strtoupper($csvd['headline'][5])!=HEADER_STUDENT_MGRP)
 				{
 					$this->throw_debug('Invalid format?!');
 				}
@@ -174,17 +190,8 @@ class PageLoad extends PageDone {
 					$name = strtoupper(trim($line[1]));
 					$nrid = strtoupper(trim($line[2]));
 					$prog = strtoupper(trim($line[3]));
-					$lgrp = ""; $mgrp = "";
-					if ($csvd['cols']>4&&!empty($line[4])&&
-							strtoupper($csvd['headline'][4])!=
-							HEADER_STUDENT_LGRP) {
-						$lgrp = strtoupper(trim($line[4]));
-					}
-					if ($csvd['cols']>5&&!empty($line[5])&&
-							strtoupper($csvd['headline'][5])!=
-							HEADER_STUDENT_MGRP) {
-						$mgrp = strtoupper(trim($line[5]));
-					}
+					$lgrp = strtoupper(trim($line[4]));
+					$mgrp = strtoupper(trim($line[5]));
 					$stud = $this->_dodata->findStudent($unid);
 					if ($stud['stat']==true) {
 						if ($stud['name']!=$name||$stud['nrid']!=$nrid) {

@@ -34,12 +34,6 @@ class PageSemCourse extends PageBase {
 			$_row->do_1skipline();
 			$_tab->append_object($_row);
 			$_col = new HTMLObject('th');
-			$_col->insert_inner('<b>'.HEADER_CCOMP_GROUP.'</b>');
-			$_row->append_object($_col);
-			$_col = new HTMLObject('th');
-			$_col->insert_inner('<b>'.HEADER_CCOMP_SUBGRP.'</b>');
-			$_row->append_object($_col);
-			$_col = new HTMLObject('th');
 			$_col->insert_inner('<b>'.HEADER_CCOMP_LABEL.'</b>');
 			$_row->append_object($_col);
 			$_col = new HTMLObject('th');
@@ -55,12 +49,6 @@ class PageSemCourse extends PageBase {
 				$_row = new HTMLObject('tr');
 				$_row->do_1skipline();
 				$_tab->append_object($_row);
-				$_col = new HTMLObject('td');
-				$_col->insert_inner($item['grp']);
-				$_row->append_object($_col);
-				$_col = new HTMLObject('td');
-				$_col->insert_inner($item['sub']);
-				$_row->append_object($_col);
 				$temp = $item['lbl'];
 				$temp = $temp.'&nbsp;&nbsp;[<a href="work.php?'.
 				'do=editccmp&ssem='.$this->_ssem.'&code='.$this->_code.
